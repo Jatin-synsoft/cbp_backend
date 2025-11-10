@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Profile Completed</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            background-color: #ffffff;
+            margin: 40px auto;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #007b83;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px 10px;
+        }
+
+        .header h2 {
+            margin: 0;
+            font-size: 22px;
+            letter-spacing: 0.5px;
+        }
+
+        .role-badge {
+            display: inline-block;
+            background-color: #e6f7f8;
+            color: #007b83;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 13px;
+            border-radius: 20px;
+            padding: 6px 15px;
+            margin-top: 10px;
+        }
+
+        .content {
+            padding: 25px 30px;
+            color: #333333;
+            line-height: 1.6;
+        }
+
+        .content p {
+            margin: 8px 0;
+            font-size: 15px;
+        }
+
+        .content strong {
+            color: #007b83;
+        }
+
+        .footer {
+            background-color: #f9f9f9;
+            text-align: center;
+            padding: 15px;
+            font-size: 13px;
+            color: #777777;
+            border-top: 1px solid #eeeeee;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: #007b83;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 10px 20px;
+            margin-top: 20px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .btn:hover {
+            background-color: #009ca3;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>✅ Profile Completed</h2>
+            <div class="role-badge">{{role}}</div>
+        </div>
+
+        <div class="content">
+            <p><strong>Name:</strong> {{fullName}}</p>
+            <p><strong>Email:</strong> {{email}}</p>
+            <p><strong>Phone:</strong> {{phone}}</p>
+
+            <p>
+                {{fullName}} ({{role}}) has successfully completed their profile details.
+                Please review and verify their information to activate or approve their account.
+            </p>
+
+            <a href="{{adminDashboardUrl}}" class="btn">Review Profile</a>
+        </div>
+
+        <div class="footer">
+            © {{year}} Consultant Booking Platform. All rights reserved.
+        </div>
+    </div>
+</body>
+
+</html>

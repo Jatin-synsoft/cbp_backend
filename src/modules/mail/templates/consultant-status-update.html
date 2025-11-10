@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{title}}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            background-color: #ffffff;
+            margin: 40px auto;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .content {
+            padding: 30px;
+            color: #333333;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .content p {
+            margin: 10px 0;
+            font-size: 15px;
+        }
+
+        .footer {
+            background-color: #f9f9f9;
+            text-align: center;
+            padding: 15px;
+            font-size: 13px;
+            color: #777777;
+            border-top: 1px solid #eeeeee;
+        }
+
+        .brand {
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header"
+            style="background-color: {{statusColor}}; color: #ffffff; text-align: center; padding: 25px 15px;">
+            <h2 style="margin: 0; font-size: 22px;">{{title}}</h2>
+        </div>
+
+        <div class="content">
+            <p>Hi <strong>{{fullName}}</strong>,</p>
+            <p>{{message}}</p>
+            <p>Thank you for being a part of
+                <span class="brand" style="color: {{statusColor}};">Consultant Booking Platform</span>.
+            </p>
+        </div>
+
+        <div class="footer">
+            © {{year}} Consultant Booking Platform. All rights reserved.
+        </div>
+    </div>
+</body>
+
+</html>
