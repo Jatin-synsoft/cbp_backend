@@ -96,15 +96,26 @@
         </div>
 
         <div class="content">
+            <p>Hello Admin,</p>
+
+            <p>
+                A new <strong>{{role}}</strong> has just registered on the
+                <span class="brand">Consultant Booking Platform</span>.
+            </p>
+
+            <p>Here are the user details:</p>
+
             <p><strong>Name:</strong> {{fullName}}</p>
             <p><strong>Email:</strong> {{email}}</p>
             <p><strong>Phone:</strong> {{phone}}</p>
 
             <p>
-                A new {{role}} has joined your platform. Please review and verify this account in the admin dashboard.
+                Please review and verify this account in your admin dashboard.
             </p>
 
             <a href="{{adminDashboardUrl}}" class="btn">View in Dashboard</a>
+
+            <p>Thank you,<br>The Consultant Booking Platform Team</p>
         </div>
 
         <div class="footer">
@@ -112,5 +123,6 @@
         </div>
     </div>
 </body>
+
 
 </html>

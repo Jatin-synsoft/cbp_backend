@@ -1,9 +1,10 @@
 import { ConfigService } from '@nestjs/config';
 import { Injectable, Logger } from '@nestjs/common';
-import * as nodemailer from 'nodemailer';
+import * as sgMail from '@sendgrid/mail';
 import * as fs from 'fs';
 import * as path from 'path';
 import { MailSubjects } from './mail-subjects';
+
 export interface SendMailTemplate {
     to?: string;
     templateName: string;
@@ -13,43 +14,50 @@ export interface SendMailTemplate {
 
 @Injectable()
 export class MailService {
-    private transporter: nodemailer.Transporter;
     private readonly logger = new Logger(MailService.name);
     private templateCache = new Map<string, string>();
 
     constructor(private readonly configService: ConfigService) {
-        this.transporter = nodemailer.createTransport({
-            host: this.configService.get('MAIL_HOST'),
-            port: Number(this.configService.get('MAIL_PORT')),
-            secure: false,
-            auth: {
-                user: this.configService.get('MAIL_USER'),
-                pass: this.configService.get('MAIL_PASS'),
-            },
-        });
-
-
+        const apiKey = this.configService.get<string>('SENDGRID_API_KEY');
+        if (!apiKey) {
+            throw new Error('Missing SENDGRID_API_KEY in environment variables');
+        }
+        sgMail.setApiKey(apiKey);
     }
 
     /** -------------------------------
      *  Core Send Function
      * ------------------------------- */
     private async send(to: string, subject: string, html: string): Promise<void> {
-        const from = `"${this.configService.get('MAIL_FROM_NAME')}" <${this.configService.get('MAIL_USER')}>`;
+        const fromEmail = this.configService.get<string>('MAIL_FROM');
+        const fromName = this.configService.get<string>('MAIL_FROM_NAME') || 'My App';
+
+        const msg = {
+            to,
+            from: { email: fromEmail, name: fromName },
+            subject,
+            html,
+        };
 
         try {
-            const info = await this.transporter.sendMail({ from, to, subject, html });
-            this.logger.log(`📨 Mail sent to ${to} | MessageId: ${info.messageId}`);
+            await sgMail.send(msg);
+            this.logger.log(`✅ Email sent to ${to} | Subject: ${subject}`);
         } catch (error) {
             this.logger.error(`❌ Failed to send mail to ${to}: ${error.message}`);
+            if (error.response) {
+                this.logger.error(JSON.stringify(error.response.body));
+            }
             throw error;
         }
     }
 
+    /** -------------------------------
+     *  Template Loader with Cache
+     * ------------------------------- */
     private getTemplate(templateName: string, variables: Record<string, string>): string {
+        console.log(`🚀 ~ :58 ~ variables:-->`, variables)
         const templatePath = path.join(__dirname, 'templates', templateName);
 
-        // ✅ Optional caching for performance
         let html = this.templateCache.get(templatePath);
         if (!html) {
             html = fs.readFileSync(templatePath, 'utf8');
@@ -62,7 +70,15 @@ export class MailService {
         return html;
     }
 
-    async sendMailTemplate({ to, templateName, context = {}, sendAsync = false, }: SendMailTemplate): Promise<void> {
+    /** -------------------------------
+     *  Main Function to Send Template Mail
+     * ------------------------------- */
+    async sendMailTemplate({
+        to,
+        templateName,
+        context = {},
+        sendAsync = false,
+    }: SendMailTemplate): Promise<void> {
         const isAdminMail = !to;
         const recipient = isAdminMail ? process.env.SUPER_ADMIN_EMAIL : to;
 
@@ -76,7 +92,8 @@ export class MailService {
             ...context,
             year: new Date().getFullYear().toString(),
             adminDashboardUrl: process.env.ADMIN_URL,
-            supportEmail: process.env.SUPPORT_EMAIL || this.configService.get('MAIL_USER'),
+            supportEmail:
+                process.env.SUPPORT_EMAIL || this.configService.get('MAIL_FROM'),
         });
 
         const sendPromise = this.send(recipient, subject, html);

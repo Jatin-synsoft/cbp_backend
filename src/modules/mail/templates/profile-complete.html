@@ -92,26 +92,37 @@
     <div class="container">
         <div class="header">
             <h2>✅ Profile Completed</h2>
-            <div class="role-badge">{{role}}</div>
         </div>
 
         <div class="content">
-            <p><strong>Name:</strong> {{fullName}}</p>
-            <p><strong>Email:</strong> {{email}}</p>
-            <p><strong>Phone:</strong> {{phone}}</p>
+            <p>Hi Admin,</p>
 
             <p>
-                {{fullName}} ({{role}}) has successfully completed their profile details.
-                Please review and verify their information to activate or approve their account.
+                <strong>{{fullName}}</strong> ({{role}}) has successfully completed their profile details
+                in the system.
+            </p>
+
+            <p>
+                Please review the information below and verify the profile to activate or approve the account.
+            </p>
+
+            <p>
+                <strong>Name:</strong> {{fullName}}<br>
+                <strong>Email:</strong> {{email}}<br>
+                <strong>Phone:</strong> {{phone}}
             </p>
 
             <a href="{{adminDashboardUrl}}" class="btn">Review Profile</a>
+
+            <p>Thank you,<br>The Admin Team</p>
         </div>
 
         <div class="footer">
-            © {{year}} Consultant Booking Platform. All rights reserved.
+            © {{year}} Boardtide Internal System. All rights reserved.
         </div>
     </div>
 </body>
+
+
 
 </html>

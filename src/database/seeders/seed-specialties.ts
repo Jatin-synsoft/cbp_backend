@@ -63,7 +63,7 @@ async function seedSpecialties() {
     },
     {
       sequelize,
-      tableName: "specialtiesmst",
+      tableName: "specialtiesMst",
       timestamps: true,
     }
   );

@@ -15,9 +15,9 @@ import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { UserStatus } from 'src/common/enums/user-status.enum';
 import { SpecialtiesMst } from 'src/database/models/specialtiesMst.model';
 import { ConsultantMailConfig } from 'src/modules/mail/consultant-mail-config';
-import { MailService } from 'src/modules/mail/mail.service';
 import { UpdateConsultantDto } from './dto/update-user.dto';
 import { paginate } from 'src/common/utils/pagination.util';
+import { MailService } from 'src/modules/mail/mail-sendgrid.service';
 
 @Injectable()
 export class UsersService {

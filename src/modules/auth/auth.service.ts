@@ -12,12 +12,12 @@ import { ConsultantDocument } from 'src/database/models/consultant-documents.mod
 import { ConsultantSpecialty } from 'src/database/models/consultant_specialties.model';
 import { STATUS_MESSAGES } from 'src/common/enums/status-messages';
 import { UserStatus } from 'src/common/enums/user-status.enum';
-import { MailService } from '../mail/mail.service';
 import { AffindaService } from '../affinda/affinda.service';
 import { Op } from 'sequelize';
 import { SpecialtiesMst } from 'src/database/models/specialtiesMst.model';
 import { Currency } from 'src/database/models/currencies.model';
 import { StripeService } from 'src/stripe/stripe.service';
+import { MailService } from '../mail/mail-sendgrid.service';
 
 @Injectable()
 export class AuthService {
