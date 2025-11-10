@@ -62,10 +62,10 @@ export class AuthService {
       expertise: dto.expertise,
     });
 
-    if (dto.role === 'CONSULTANT') {
-      const account = await this.stripeService.createConnectedAccount(user.email);
-      console.log(`🚀 ~ :67 ~ account:-->`, account)
-    }
+    // if (dto.role === 'CONSULTANT') {
+    //   const account = await this.stripeService.createConnectedAccount(user.email);
+    //   console.log(`🚀 ~ :67 ~ account:-->`, account)
+    // }
 
     const token = jwt.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1d' },);
 
