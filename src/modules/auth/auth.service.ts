@@ -52,7 +52,7 @@ export class AuthService {
 
     await this.userRoleModel.create({ userId: user.id, roleId });
 
-    await this.profileModel.create({
+    let profile = await this.profileModel.create({
       userId: user.id,
       street: dto.street,
       city: dto.city,
@@ -62,10 +62,13 @@ export class AuthService {
       expertise: dto.expertise,
     });
 
-    // if (dto.role === 'CONSULTANT') {
-    //   const account = await this.stripeService.createConnectedAccount(user.email);
-    //   console.log(`🚀 ~ :67 ~ account:-->`, account)
-    // }
+    if (dto.role === 'CONSULTANT') {
+      const account = await this.stripeService.createConnectedAccount(user.email);
+      if (account.id) {
+        profile.stripeAccountId = account.id;
+        await profile.save();
+      }
+    }
 
     const token = jwt.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1d' },);
 
@@ -232,8 +235,9 @@ export class AuthService {
             'qualification',
             'expertise',
             'references',
-            'dob',
             'hourlyRate',
+            'stripeAccountId',
+            'stripeAccountStatus'
           ],
           include: [
             {

@@ -7,6 +7,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
+import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -50,6 +51,7 @@ async function bootstrap() {
     },
   });
   const port = configService.get<number>("PORT") || 3000;
+  app.use('/stripe/webhook', express.raw({ type: 'application/json' }));
 
   await app.listen(port);
 

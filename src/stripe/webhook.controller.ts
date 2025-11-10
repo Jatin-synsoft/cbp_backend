@@ -2,6 +2,7 @@ import { Controller, Post, Req, Res, Headers } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { Request, Response } from 'express';
+import { Profile } from 'src/database/models/profile.model';
 
 @Controller('stripe/webhook')
 export class StripeWebhookController {
@@ -36,8 +37,18 @@ export class StripeWebhookController {
             case 'account.updated':
                 const account = event.data.object as Stripe.Account;
                 console.log(`Account ${account.id} updated`);
-                // check if requirements are done and mark consultant verified
-                break;
+                if (account.charges_enabled && account.payouts_enabled) {
+                    await Profile.update(
+                        { stripeAccountStatus: 'VERIFIED' },
+                        { where: { stripeAccountId: account.id } },
+                    );
+                } else {
+                    console.log('⏳ Consultant not fully verified yet.');
+                    await Profile.update(
+                        { stripeAccountStatus: 'PENDING' },
+                        { where: { stripeAccountId: account.id } },
+                    );
+                } break;
             case 'transfer.created':
                 console.log('✅ Transfer created');
                 break;

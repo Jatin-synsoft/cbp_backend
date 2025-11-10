@@ -1,6 +1,7 @@
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo, PrimaryKey, AutoIncrement } from 'sequelize-typescript';
 import { User } from './user.model';
 import { Currency } from './currencies.model';
+import { StripeAccountStatus } from '../../common/enums/account-status.enum';
 
 @Table({ tableName: 'profiles', timestamps: true, })
 export class Profile extends Model {
@@ -53,6 +54,12 @@ export class Profile extends Model {
 
     @Column({ type: DataType.DECIMAL, allowNull: true })
     hourlyRate: number;
+
+    @Column({ type: DataType.STRING, unique: true, allowNull: true })
+    stripeAccountId: string;
+
+    @Column({ type: DataType.ENUM(...Object.values(StripeAccountStatus)), allowNull: false, defaultValue: StripeAccountStatus.PENDING })
+    stripeAccountStatus: StripeAccountStatus;
 
     @BelongsTo(() => User)
     user: User;

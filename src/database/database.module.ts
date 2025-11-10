@@ -26,8 +26,8 @@ import { Booking } from './models/booking.model';
         password: configService.get<string>("DATABASE_PASSWORD") || '',
         database: configService.get<string>("DATABASE_NAME"),
         autoLoadModels: true, // Automatically registers models
-        synchronize: true, // Don't auto-create tables in prod
-        // alter: true,
+        // synchronize: true,
+        // alter: true, // safer
         // define: {
         //   charset: "utf8mb4",
         //   collate: "utf8mb4_unicode_ci",   
