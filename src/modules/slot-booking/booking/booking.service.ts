@@ -99,38 +99,47 @@ export class BookingService {
   }
 
   async findAllBookings(user: any, query: PaginationDto) {
-
     let { page = 1, limit = 10, search = '', status } = query;
-
     const { roles, id: userId } = user;
+
     const where: any = {};
+    const include: any[] = [];
 
     if (roles.includes(2)) {
       where.consultantId = userId;
+
+      include.push({
+        model: this.userModel,
+        as: 'customer',
+        attributes: ['id', 'fullName', 'email', 'phone'],
+      });
     } else if (roles.includes(3)) {
       where.customerId = userId;
+
+      include.push({
+        model: this.userModel,
+        as: 'consultant',
+        attributes: ['id', 'fullName', 'email', 'phone'],
+      });
     } else {
       throw new BadRequestException('Invalid role');
     }
 
     if (search) {
-      where[Op.or] = [
-        { '$customer.fullName$': { [Op.like]: `%${search}%` } },
-        { '$customer.email$': { [Op.like]: `%${search}%` } },
-        { '$consultant.fullName$': { [Op.like]: `%${search}%` } },
-        { '$consultant.email$': { [Op.like]: `%${search}%` } },
-      ];
+      if (roles.includes(2)) {
+        where[Op.or] = [
+          { '$customer.fullName$': { [Op.like]: `%${search}%` } },
+          { '$customer.email$': { [Op.like]: `%${search}%` } },
+        ];
+      } else if (roles.includes(3)) {
+        where[Op.or] = [
+          { '$consultant.fullName$': { [Op.like]: `%${search}%` } },
+          { '$consultant.email$': { [Op.like]: `%${search}%` } },
+        ];
+      }
     }
 
     if (status) where.status = status;
-
-    const include = [
-      {
-        model: this.userModel,
-        as: 'customer',
-        attributes: ['id', 'fullName', 'email', 'phone'],
-      },
-    ];
 
     const result = await paginate(
       this.bookingModel,
@@ -141,10 +150,9 @@ export class BookingService {
 
     return {
       statusCode: 200,
-      message: `Bookings fetched successfully`,
+      message: 'Bookings fetched successfully',
       data: result,
     };
-
   }
 
   async checkSlotAvailability(consultantId: number, bookingDate: Date, startTime: string, endTime: string, transaction: Transaction) {

@@ -55,7 +55,6 @@ export class MailService {
      *  Template Loader with Cache
      * ------------------------------- */
     private getTemplate(templateName: string, variables: Record<string, string>): string {
-        console.log(`🚀 ~ :58 ~ variables:-->`, variables)
         const templatePath = path.join(__dirname, 'templates', templateName);
 
         let html = this.templateCache.get(templatePath);

@@ -61,6 +61,9 @@ export class Profile extends Model {
     @Column({ type: DataType.ENUM(...Object.values(StripeAccountStatus)), allowNull: false, defaultValue: StripeAccountStatus.PENDING })
     stripeAccountStatus: StripeAccountStatus;
 
+    @Column({ type: DataType.JSON, allowNull: true })
+    stripeProfile: Record<string, any>;
+
     @BelongsTo(() => User)
     user: User;
 

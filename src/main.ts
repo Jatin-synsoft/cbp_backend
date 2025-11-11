@@ -11,16 +11,14 @@ import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    bodyParser: false, // 👈 disable Nest’s body parser globally
+    bodyParser: false,
   });
 
   const configService = app.get(ConfigService);
   const reflector = app.get(Reflector);
 
-  // ⚠️ Raw body for Stripe webhooks (must come before other middlewares)
   app.use('/stripe/webhook', express.raw({ type: 'application/json' }));
 
-  // Then re-enable JSON body parsing for everything else
   app.use(express.json());
 
   app.setGlobalPrefix('api', { exclude: ['/', '/stripe/webhook'] });
@@ -31,7 +29,6 @@ async function bootstrap() {
 
   app.useStaticAssets(join(__dirname, '..', 'uploads'), { prefix: '/uploads/' });
 
-  // Swagger setup
   const config = new DocumentBuilder()
     .setTitle('Consultant Booking Platform API')
     .setDescription('NestJS backend for a consultant booking and scheduling platform.')

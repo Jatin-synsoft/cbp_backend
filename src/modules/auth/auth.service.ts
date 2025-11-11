@@ -71,11 +71,11 @@ export class AuthService {
     }
 
     const token = jwt.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1d' },);
-
+    const verifyEmailUrl = `${process.env.BACKEND_URL}/api/auth/verify-email?token=${token}`;
     this.mailService.sendMailTemplate({
       to: user.email,
       templateName: 'verify-email.html',
-      context: { fullName: user.fullName, token },
+      context: { fullName: user.fullName, verifyEmailUrl },
       sendAsync: true,
     });
 

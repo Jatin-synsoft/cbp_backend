@@ -61,7 +61,7 @@ export class AuthController {
   async verifyEmail(@Query('token') token: string, @Res() res: Response) {
     try {
       await this.authService.verifyEmail(token);
-      return res.redirect(`${process.env.FRONTEND_URL}`);
+      return res.redirect(`${process.env.FRONTEND_URL}/auth/verify-email/successfull`);
     } catch (err) {
       return res.redirect(`${process.env.FRONTEND_URL}`);
     }
