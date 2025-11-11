@@ -12,6 +12,7 @@ export class StripeWebhookController {
     constructor(private config: ConfigService) {
         this.stripe = new Stripe(this.config.get('STRIPE_SECRET_KEY'));
         this.webhookSecret = this.config.get('STRIPE_WEBHOOK_SECRET');
+        console.log(`🚀 ~ :15 ~  this.webhookSecret:-->`, this.webhookSecret)
     }
 
     @Post()
