@@ -8,21 +8,21 @@ export class StripeController {
   constructor(private readonly stripeService: StripeService) { }
 
   // // 1️⃣ Create connected account
-  // @Post('account')
-  // @ApiOperation({ summary: 'Create a connected Stripe account for consultant' })
-  // @ApiBody({
-  //   schema: {
-  //     type: 'object',
-  //     properties: {
-  //       email: { type: 'string', example: 'consultant@example.com' },
-  //     },
-  //     required: ['email'],
-  //   },
-  // })
-  // async createAccount(@Body('email') email: string) {
-  //   const account = await this.stripeService.createConnectedAccount(email);
-  //   return { accountId: account.id };
-  // }
+  @Post('account')
+  @ApiOperation({ summary: 'Create a connected Stripe account for consultant' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        email: { type: 'string', example: 'consultant@example.com' },
+      },
+      required: ['email'],
+    },
+  })
+  async createAccount(@Body('email') email: string) {
+    const account = await this.stripeService.createConnectedAccount(email);
+    return { accountId: account.id };
+  }
 
   // 2️⃣ Create onboarding link
   @Post('onboard')
