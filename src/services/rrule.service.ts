@@ -51,7 +51,11 @@ export class RruleService {
       if (isNaN(start.getTime()) || isNaN(end.getTime())) return [];
 
       // 🕒 Get all recurring occurrences
-      const occurrences = ruleSet.between(start, end, true);
+      const effectiveStart = new Date(
+        Math.max(dtstart.getTime(), new Date(dto.startDate).getTime())
+      );
+
+      const occurrences = ruleSet.between(effectiveStart, end, true);
       if (!occurrences.length) return [];
 
       // ✅ Extract BYHOUR safely

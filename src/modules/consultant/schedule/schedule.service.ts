@@ -100,6 +100,7 @@ export class ScheduleService {
   }
 
   async getConsultantAvailability(userId: number, query: GetAvailabilityDto) {
+    const now = dayjs();
 
     const { startDate, endDate } = query;
     // 1. Fetch schedules
@@ -150,14 +151,17 @@ export class ScheduleService {
     const array: any = [];
 
     generatedAvailability.forEach(({ date, slots }) => {
+
       slots.forEach((slot) => {
+        const isExpired = dayjs(slot.end).isBefore(now);
+
         const isBooked = bookedSlots.some(
           (b) =>
             dayjs(b.start).isSame(slot.start) && dayjs(b.end).isSame(slot.end)
         );
 
-        const isPast = dayjs(slot.start).isBefore(dayjs());
-        const isAvailable = !isBooked && !isPast;
+        // const isPast = dayjs(slot.start).isBefore(dayjs());
+        const isAvailable = !isBooked && !isExpired;
 
         const startTime = formatTime(slot.start);
         const endTime = formatTime(slot.end);
@@ -175,20 +179,58 @@ export class ScheduleService {
           .split("T")[1]
           .slice(0, 5)}`;
 
+        // array.push({
+        //   id: `avail-${date}-${slot.start}`,
+        //   title: isAvailable ? "Slot Available" : "Booked Slot",
+        //   type: isAvailable ? "available" : "booked",
+        //   slot: `${slot.start} - ${slot.end}`,
+        //   start: startDate,
+        //   end: endDate,
+        //   timeSlot,
+        //   isAvailable,
+        //   backgroundColor: isAvailable ? "#A7F3D0" : "#FCA5A5",
+        //   borderColor: isAvailable ? "#34D399" : "#DC2626",
+        //   textColor: isAvailable ? "#064E3B" : "#7F1D1D",
+        // });
         array.push({
           id: `avail-${date}-${slot.start}`,
-          title: isAvailable ? "Slot Available" : "Booked Slot",
-          type: isAvailable ? "available" : "booked",
+          title: isBooked
+            ? "Booked Slot"
+            : isExpired
+              ? "Expired Slot"
+              : "Slot Available",
+          type: isBooked
+            ? "booked"
+            : isExpired
+              ? "expired"
+              : "available",
           slot: `${slot.start} - ${slot.end}`,
           start: startDate,
           end: endDate,
           timeSlot,
           isAvailable,
-          backgroundColor: isAvailable ? "#A7F3D0" : "#FCA5A5",
-          borderColor: isAvailable ? "#34D399" : "#DC2626",
-          textColor: isAvailable ? "#064E3B" : "#7F1D1D",
+          backgroundColor: isBooked
+            ? "#FCA5A5"
+            : isExpired
+              ? "#E5E7EB"
+              : "#A7F3D0",
+          borderColor: isBooked
+            ? "#DC2626"
+            : isExpired
+              ? "#9CA3AF"
+              : "#34D399",
+          textColor: isBooked
+            ? "#7F1D1D"
+            : isExpired
+              ? "#6B7280"
+              : "#064E3B",
         });
+
+
       });
+
+
+
     });
 
     return {
