@@ -198,7 +198,98 @@ export class ScheduleService {
       availability: array,
     };
   }
+  // async getConsultantAvailability(userId: number, query: GetAvailabilityDto) {
+  //   const { startDate, endDate } = query;
 
+  //   // 1. Fetch schedules
+  //   const schedules = await this.scheduleModel.findAll({ where: { userId } });
+
+  //   let generatedAvailability: {
+  //     date: string;
+  //     slots: { start: string; end: string }[];
+  //   }[] = [];
+
+  //   // 2. Generate slots per schedule (already returns IST times)
+  //   for (const schedule of schedules) {
+  //     const slots = await this.rruleService.generateRecurringDatesFunc(schedule, {
+  //       startDate,
+  //       endDate,
+  //     });
+
+  //     for (const slot of slots) {
+  //       const date = dayjs(slot.start).format('YYYY-MM-DD');
+
+  //       let daySlot = generatedAvailability.find((d) => d.date === date);
+  //       if (!daySlot) {
+  //         daySlot = { date, slots: [] };
+  //         generatedAvailability.push(daySlot);
+  //       }
+
+  //       daySlot.slots.push(slot);
+  //     }
+  //   }
+
+  //   // 3. Fetch existing bookings (convert to IST)
+  //   const existingBookings = await this.bookingModel.findAll({
+  //     where: {
+  //       consultantId: userId,
+  //       scheduleDate: { [Op.between]: [startDate, endDate] },
+  //     },
+  //   });
+
+  //   const bookedSlots = existingBookings.map((b) => ({
+  //     start: dayjs.tz(`${b.scheduleDate}T${b.startTime}`, 'Asia/Kolkata').format(),
+  //     end: dayjs.tz(`${b.scheduleDate}T${b.endTime}`, 'Asia/Kolkata').format(),
+  //   }));
+
+  //   const array: any[] = [];
+
+  //   generatedAvailability.forEach(({ date, slots }) => {
+  //     slots.forEach((slot) => {
+  //       const isBooked = bookedSlots.some(
+  //         (b) => dayjs(b.start).isSame(slot.start) && dayjs(b.end).isSame(slot.end)
+  //       );
+
+  //       const isPast = dayjs(slot.start).isBefore(dayjs());
+  //       const isAvailable = !isBooked && !isPast;
+
+  //       const startTime = formatTime(slot.start);
+  //       const endTime = formatTime(slot.end);
+
+  //       const startIso = dayjs(`${date} ${startTime}`, 'YYYY-MM-DD hh:mm A')
+  //         .tz('Asia/Kolkata')
+  //         .format();
+  //       const endIso = dayjs(`${date} ${endTime}`, 'YYYY-MM-DD hh:mm A')
+  //         .tz('Asia/Kolkata')
+  //         .format();
+
+  //       const timeSlot = `${dayjs(slot.start).format('HH:mm')}-${dayjs(
+  //         slot.end
+  //       ).format('HH:mm')}`;
+
+  //       array.push({
+  //         id: `avail-${date}-${slot.start}`,
+  //         title: isAvailable ? 'Slot Available' : 'Booked Slot',
+  //         type: isAvailable ? 'available' : 'booked',
+  //         slot: `${slot.start} - ${slot.end}`,
+  //         start: startIso,
+  //         end: endIso,
+  //         timeSlot,
+  //         isAvailable,
+  //         backgroundColor: isAvailable ? '#A7F3D0' : '#FCA5A5',
+  //         borderColor: isAvailable ? '#34D399' : '#DC2626',
+  //         textColor: isAvailable ? '#064E3B' : '#7F1D1D',
+  //       });
+  //     });
+  //   });
+
+  //   return {
+  //     userId,
+  //     startDate,
+  //     endDate,
+  //     availability: array,
+  //   };
+  // }
   async getSchedules(userId: number) {
     try {
       const schedules = await this.scheduleModel.findAll({

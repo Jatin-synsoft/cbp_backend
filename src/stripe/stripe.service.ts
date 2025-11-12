@@ -28,8 +28,8 @@ export class StripeService {
     try {
       const accountLink = await this.stripe.accountLinks.create({
         account: accountId,
-        refresh_url: 'http://192.168.0.191:3000/consultant/stripe-fail',
-        return_url: 'http://192.168.0.191:3000/consultant/stripe-success',
+        refresh_url: `${process.env.FRONTEND_URL}/consultant/stripe-fail`,
+        return_url: `${process.env.FRONTEND_URL}/consultant/stripe-success`,
         type: 'account_onboarding',
       });
       return accountLink.url;

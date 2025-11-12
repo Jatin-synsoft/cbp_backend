@@ -109,6 +109,98 @@ export class RruleService {
     }
   }
 
+  // async generateRecurringDatesFunc(
+  //   schedule: any,
+  //   dto: { startDate: string; endDate: string }
+  // ) {
+  //   try {
+  //     if (!schedule?.rrule) return [];
+
+  //     const dtstart = extractDtstartFromRrule(schedule.rrule);
+  //     if (isNaN(dtstart.getTime())) return [];
+
+  //     // 🧹 Clean RRULE string
+  //     const cleanedRule = schedule.rrule
+  //       .replace('COUNT=0', '')
+  //       .replace('INTERVAL=0', 'INTERVAL=1')
+  //       .replace(/;;+/g, ';')
+  //       .split('\n')
+  //       .filter((line) => !line.startsWith('DTSTART'))
+  //       .filter((line) => line.trim() && !line.includes('undefined'))
+  //       .join('\n');
+
+  //     const ruleSet = rrulestr(cleanedRule, { dtstart, forceset: true });
+
+  //     const start = new Date(dto.startDate);
+  //     start.setHours(0, 0, 0, 0);
+  //     const end = new Date(dto.endDate);
+  //     end.setHours(23, 59, 59, 999);
+
+  //     if (isNaN(start.getTime()) || isNaN(end.getTime())) return [];
+
+  //     // 🕒 Generate occurrences
+  //     const occurrences = ruleSet.between(start, end, true);
+  //     if (!occurrences.length) return [];
+
+  //     // ✅ Extract BYHOUR safely
+  //     let byHours: number[] = [];
+
+  //     if (ruleSet instanceof RRuleSet && (ruleSet as any)._rrule?.length) {
+  //       const firstRule = (ruleSet as any)._rrule[0];
+  //       if (firstRule?.options && Array.isArray(firstRule.options.byhour)) {
+  //         byHours = firstRule.options.byhour;
+  //       }
+  //     }
+
+  //     if (!byHours.length) byHours = [occurrences[0]?.getUTCHours() ?? 0];
+
+  //     // 🔁 Generate slots
+  //     const slots: { start: string; end: string }[] = [];
+
+  //     for (const occ of occurrences) {
+  //       for (const hour of byHours) {
+  //         const slotStart = new Date(
+  //           Date.UTC(
+  //             occ.getUTCFullYear(),
+  //             occ.getUTCMonth(),
+  //             occ.getUTCDate(),
+  //             hour,
+  //             0,
+  //             0
+  //           )
+  //         );
+
+  //         const slotEnd = new Date(slotStart);
+  //         slotEnd.setUTCHours(slotStart.getUTCHours() + 1);
+
+  //         slots.push({
+  //           start: slotStart.toISOString(),
+  //           end: slotEnd.toISOString(),
+  //         });
+  //       }
+  //     }
+
+  //     // 🧠 Remove duplicates
+  //     const uniqueSlots = Array.from(
+  //       new Map(slots.map((s) => [s.start + s.end, s])).values()
+  //     );
+
+  //     // 🌏 Convert to IST before returning
+  //     const istSlots = uniqueSlots.map((s) => ({
+  //       start: dayjs.utc(s.start).tz('Asia/Kolkata').format(),
+  //       end: dayjs.utc(s.end).tz('Asia/Kolkata').format(),
+  //     }));
+
+  //     return istSlots;
+  //   } catch (err) {
+  //     this.logger.error(
+  //       `Error generating slots for schedule ${schedule?.scheduleId}: ${err.message}`
+  //     );
+  //     return [];
+  //   }
+  // }
+
+
   async getRruleAvailability(
     consultantId: number,
     startDate: string,
