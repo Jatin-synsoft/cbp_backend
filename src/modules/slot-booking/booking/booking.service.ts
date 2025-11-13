@@ -153,7 +153,8 @@ export class BookingService {
       const user = await this.userModel.findByPk(userId);
       const consultant = await this.userModel.findByPk(consultantId);
 
-      const formattedDate = dayjs(scheduleDate).format("MMM D, YYYY");
+      const formattedDate = dayjs(scheduleDate, "YYYY-MM-DD").format("MMM D, YYYY");
+
       const slotTime = `${startTime} - ${endTime}`;
 
       // this.mailService.sendMailTemplate({
@@ -179,7 +180,7 @@ export class BookingService {
           userEmail: user.email,
           bookingDate: formattedDate,
           slotTime,
-          consultantDashboardUrl: `${process.env.FRONTEND_URL}/consultant/bookings`,
+          consultantDashboardUrl: `${process.env.FRONTEND_URL}/consultant/my-bookings`,
           year: new Date().getFullYear(),
         },
         sendAsync: true,

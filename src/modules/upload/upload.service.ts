@@ -20,7 +20,7 @@ export class UploadService {
         try {
             // const fileUrl = join(process.cwd(), file.path.replace(/\\/g, '/'));
 
-            const fileUrl = `http://192.168.0.175:3000/${file.path.replace(/\\/g, '/')}`;
+            const fileUrl = `${process.env.BACKEND_URL}/${file.path.replace(/\\/g, '/')}`;
 
             return { message: 'File uploaded successfully', data: { fileUrl } };
         } catch (err) {

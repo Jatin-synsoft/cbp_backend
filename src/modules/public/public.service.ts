@@ -112,12 +112,12 @@ export class PublicService {
           { fullName: { [Op.like]: `%${search}%` } },
 
           // ✅ Search inside profile fields
-          Sequelize.literal(
-            `(JSON_SEARCH(LOWER(profile.skills), 'one', '%${search.toLowerCase()}%') IS NOT NULL 
-              OR profile.qualification LIKE '%${search}%'
-              OR profile.city LIKE '%${search}%'
-              OR profile.state LIKE '%${search}%')`
-          ),
+          // Sequelize.literal(
+          //   `(JSON_SEARCH(LOWER(profile.skills), 'one', '%${search.toLowerCase()}%') IS NOT NULL 
+          //     OR profile.qualification LIKE '%${search}%'
+          //     OR profile.city LIKE '%${search}%'
+          //     OR profile.state LIKE '%${search}%')`
+          // ),
         ],
       };
 
