@@ -8,7 +8,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { Request, Response } from 'express';
-import { updateStripeProfile } from 'src/common/helper/update-stripe-profile';
+import { updateBookingPaymentStatus, updateStripeProfile } from 'src/common/helper/update-stripe-profile';
 
 @Controller('stripe/webhook')
 export class StripeWebhookController {
@@ -45,7 +45,7 @@ export class StripeWebhookController {
         switch (event.type) {
             case 'payment_intent.succeeded': {
                 const paymentIntent = event.data.object as Stripe.PaymentIntent;
-
+                await updateBookingPaymentStatus(paymentIntent.id);
                 console.log('💰 Payment successful!');
                 console.log('PaymentIntent ID:', paymentIntent.id);
                 console.log('Amount:', paymentIntent.amount);
