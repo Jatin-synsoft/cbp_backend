@@ -17,9 +17,11 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const reflector = app.get(Reflector);
 
+  // ✅ Stripe webhook MUST receive raw body
   app.use('/stripe/webhook', express.raw({ type: 'application/json' }));
 
-  app.use(express.json());
+  // ❌ REMOVE THIS – it breaks Stripe webhook
+  // app.use(express.json());
 
   app.setGlobalPrefix('api', { exclude: ['/', '/stripe/webhook'] });
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
