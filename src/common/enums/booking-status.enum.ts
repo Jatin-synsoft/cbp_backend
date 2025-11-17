@@ -5,3 +5,10 @@ export enum BookingStatus {
   COMPLETED = "COMPLETED",
   RESCHEDULED = "RESCHEDULED",
 }
+
+export enum BookingTransactionStatus {
+  PENDING = "PENDING",
+  PAYMENT_SUCCESS = "PAYMENT_SUCCESS",
+  PAYMENT_FAILED = "PAYMENT_FAILED",
+  REFUNDED = "REFUNDED",
+}

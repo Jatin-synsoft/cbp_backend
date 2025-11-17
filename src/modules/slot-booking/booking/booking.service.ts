@@ -15,6 +15,10 @@ import { User } from 'src/database/models/user.model';
 import { ConsultantSchedule } from 'src/database/models/consultantSchedule.model';
 import { paginate } from 'src/common/utils/pagination.util';
 import { MailService } from 'src/modules/mail/mail-sendgrid.service';
+import { StripeService } from 'src/stripe/stripe.service';
+import { Profile } from 'src/database/models/profile.model';
+import { Currency } from 'src/database/models/currencies.model';
+import { BookingTransaction } from 'src/database/models/bookingTransaction.model';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -24,10 +28,12 @@ export class BookingService {
   constructor(
     @InjectModel(Booking) private bookingModel: typeof Booking,
     @InjectModel(User) private userModel: typeof User,
-    @InjectModel(ConsultantSchedule) private scheduleModel: typeof ConsultantSchedule,
+    @InjectModel(Profile) private profileModel: typeof Profile,
+    @InjectModel(Currency) private currencyModel: typeof Currency,
+    @InjectModel(BookingTransaction) private bookingTransactionModel: typeof BookingTransaction,
     private rruleService: RruleService,
     private sequelize: Sequelize,
-    private mailService: MailService
+    private stripeService: StripeService,
   ) { }
 
   // async createBooking(bookingDto: CreateBookingDto, userId: number) {
@@ -102,13 +108,37 @@ export class BookingService {
 
   async createBooking(bookingDto: CreateBookingDto, userId: number) {
     const transaction = await this.sequelize.transaction();
+
     try {
       const { consultantId, bookingDate, startTime, endTime, notes, scheduleDate } = bookingDto;
 
-      const tz = "UTC";
-      const slotStart = dayjs.tz(`${scheduleDate} ${startTime.split(":")[0]}`, "YYYY-MM-DD HH:mm", tz);
-      const slotEnd = dayjs.tz(`${scheduleDate} ${endTime.split(":")[0]}`, "YYYY-MM-DD HH:mm", tz);
+      const consultant = await this.userModel.findOne({
+        where: { id: consultantId, },
+        include: [
+          {
+            model: this.profileModel,
+            attributes: ['id', 'hourlyRate', 'currencyId', 'stripeAccountId', 'stripeAccountStatus'],
+            where: {
+              stripeAccountStatus: 'VERIFIED'
+            },
+            include: [{
+              model: this.currencyModel,
+              attributes: ['id', 'code']
+            }]
+          },
+        ]
+      });
 
+      const consultantDB = consultant.get({ plain: true });
+      const consultantAccountId = consultantDB.profile.stripeAccountId;
+      const bookingAmount = consultantDB.profile.hourlyRate * 100;
+      const amount = consultantDB.profile.hourlyRate
+      const currencyCode = consultantDB.profile.currency.code;
+      const tz = "UTC";
+      const slotStart = dayjs.tz(`${scheduleDate} ${startTime}`, "YYYY-MM-DD HH:mm", tz);
+      const slotEnd = dayjs.tz(`${scheduleDate} ${endTime}`, "YYYY-MM-DD HH:mm", tz);
+
+      // 1️⃣ Check Availability
       const checkSlots = await this.rruleService.getRruleAvailability(
         consultantId,
         slotStart.format("YYYY-MM-DD"),
@@ -130,7 +160,6 @@ export class BookingService {
       });
 
       if (!slot) {
-        console.log("Slot not available");
         return { isValid: false, conflicts: [] };
       }
 
@@ -143,53 +172,31 @@ export class BookingService {
           startTime: slotStart.format("HH:mm"),
           endTime: slotEnd.format("HH:mm"),
           notes,
-          status: BookingStatus.CONFIRMED,
+          amount
+        },
+        { transaction }
+      );
+
+      const stripeResp = await this.stripeService.createSplitPaymentIntent(consultantAccountId, bookingAmount, currencyCode);
+
+      await this.bookingTransactionModel.create(
+        {
+          bookingId: booking.id,
+          paymentIntentId: stripeResp.paymentIntentId,
+          transactionId: null,
+          currencyId: consultantDB.profile.currency.id,
+          amount,
         },
         { transaction }
       );
 
       await transaction.commit();
 
-      const user = await this.userModel.findByPk(userId);
-      const consultant = await this.userModel.findByPk(consultantId);
-
-      const formattedDate = dayjs(scheduleDate, "YYYY-MM-DD").format("MMM D, YYYY");
-
-      const slotTime = `${startTime} - ${endTime}`;
-
-      // this.mailService.sendMailTemplate({
-      //   to: user.email,
-      //   templateName: "booking-received-user.html",
-      //   context: {
-      //     fullName: user.fullName,
-      //     consultantName: consultant.fullName,
-      //     bookingDate: formattedDate,
-      //     slotTime,
-      //     dashboardUrl: `${process.env.FRONTEND_URL}/user/bookings`,
-      //     year: new Date().getFullYear(),
-      //   },
-      //   sendAsync: true,
-      // });
-
-      this.mailService.sendMailTemplate({
-        to: consultant.email,
-        templateName: "booking-received-consultant.html",
-        context: {
-          consultantName: consultant.fullName,
-          userFullName: user.fullName,
-          userEmail: user.email,
-          bookingDate: formattedDate,
-          slotTime,
-          consultantDashboardUrl: `${process.env.FRONTEND_URL}/consultant/my-bookings`,
-          year: new Date().getFullYear(),
-        },
-        sendAsync: true,
-      });
-
       return {
         isValid: true,
-        booking,
         message: "Booking created successfully",
+        booking,
+        clientSecret: stripeResp.clientSecret
       };
 
     } catch (error) {
@@ -197,6 +204,105 @@ export class BookingService {
       throw error;
     }
   }
+
+
+
+  // async createBooking(bookingDto: CreateBookingDto, userId: number) {
+  //   const transaction = await this.sequelize.transaction();
+  //   try {
+  //     const { consultantId, bookingDate, startTime, endTime, notes, scheduleDate } = bookingDto;
+
+  //     const tz = "UTC";
+  //     const slotStart = dayjs.tz(`${scheduleDate} ${startTime.split(":")[0]}`, "YYYY-MM-DD HH:mm", tz);
+  //     const slotEnd = dayjs.tz(`${scheduleDate} ${endTime.split(":")[0]}`, "YYYY-MM-DD HH:mm", tz);
+
+  //     const checkSlots = await this.rruleService.getRruleAvailability(
+  //       consultantId,
+  //       slotStart.format("YYYY-MM-DD"),
+  //       slotEnd.add(1, "day").format("YYYY-MM-DD"),
+  //       tz
+  //     );
+
+  //     const slot = checkSlots.availability.find((item) => {
+  //       const [start] = item.slot.split(" - ");
+  //       const dateObj = new Date(start);
+  //       const date = dateObj.toISOString().split("T")[0];
+  //       const time = dateObj.toISOString().split("T")[1].slice(0, 5);
+
+  //       return (
+  //         date === slotStart.format("YYYY-MM-DD") &&
+  //         time === startTime &&
+  //         item.isAvailable
+  //       );
+  //     });
+
+  //     if (!slot) {
+  //       console.log("Slot not available");
+  //       return { isValid: false, conflicts: [] };
+  //     }
+
+  //     const booking = await this.bookingModel.create(
+  //       {
+  //         consultantId,
+  //         customerId: userId,
+  //         scheduleDate: slotStart.toDate(),
+  //         bookingDate: new Date(bookingDate),
+  //         startTime: slotStart.format("HH:mm"),
+  //         endTime: slotEnd.format("HH:mm"),
+  //         notes,
+  //       },
+  //       { transaction }
+  //     );
+
+  //     await transaction.commit();
+
+  //     const user = await this.userModel.findByPk(userId);
+  //     const consultant = await this.userModel.findByPk(consultantId);
+
+  //     const formattedDate = dayjs(scheduleDate, "YYYY-MM-DD").format("MMM D, YYYY");
+
+  //     const slotTime = `${startTime} - ${endTime}`;
+
+  //     // this.mailService.sendMailTemplate({
+  //     //   to: user.email,
+  //     //   templateName: "booking-received-user.html",
+  //     //   context: {
+  //     //     fullName: user.fullName,
+  //     //     consultantName: consultant.fullName,
+  //     //     bookingDate: formattedDate,
+  //     //     slotTime,
+  //     //     dashboardUrl: `${process.env.FRONTEND_URL}/user/bookings`,
+  //     //     year: new Date().getFullYear(),
+  //     //   },
+  //     //   sendAsync: true,
+  //     // });
+
+  //     this.mailService.sendMailTemplate({
+  //       to: consultant.email,
+  //       templateName: "booking-received-consultant.html",
+  //       context: {
+  //         consultantName: consultant.fullName,
+  //         userFullName: user.fullName,
+  //         userEmail: user.email,
+  //         bookingDate: formattedDate,
+  //         slotTime,
+  //         consultantDashboardUrl: `${process.env.FRONTEND_URL}/consultant/my-bookings`,
+  //         year: new Date().getFullYear(),
+  //       },
+  //       sendAsync: true,
+  //     });
+
+  //     return {
+  //       isValid: true,
+  //       booking,
+  //       message: "Booking created successfully",
+  //     };
+
+  //   } catch (error) {
+  //     await transaction.rollback();
+  //     throw error;
+  //   }
+  // }
 
   async findAllBookings(user: any, query: PaginationDto) {
     let { page = 1, limit = 10, search = '', status } = query;

@@ -68,7 +68,7 @@ export class PublicService {
       },
       {
         model: this.profileModel,
-        attributes: ['qualification', 'skills', 'city', 'state', 'hourlyRate', 'currencyId'],
+        attributes: ['qualification', 'skills', 'city', 'state', 'hourlyRate', 'currencyId', 'stripeAccountId', 'stripeAccountStatus'],
         where: {
           [Op.and]: [],
         },

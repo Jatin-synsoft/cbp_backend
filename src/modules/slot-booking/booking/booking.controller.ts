@@ -14,17 +14,17 @@ import { PaginationDto } from './dto/pagination.dto';
 @Roles(3)
 @Controller('booking')
 export class BookingController {
-  constructor(private readonly bookingService: BookingService) {}
+  constructor(private readonly bookingService: BookingService) { }
 
   @Post('create')
   @ApiOperation({ summary: "Create a new booking" })
   @ApiResponse({ status: 200, type: BookingResponseDto })
-  async create( @GetUser() user: any, @Body() bookingDto: CreateBookingDto): Promise<BookingResponseDto> { 
+  async create(@GetUser() user: any, @Body() bookingDto: CreateBookingDto): Promise<BookingResponseDto> {
 
-    const result: any = await this.bookingService.createBooking( bookingDto,  user.id  );
+    const result: any = await this.bookingService.createBooking(bookingDto, user.id);
 
-    if (!result.isValid) { 
-       throw new BadRequestException( `Booking not available on ${result.conflicts.join(", ")}`,);
+    if (!result.isValid) {
+      throw new BadRequestException(`Booking not available on ${result.conflicts.join(", ")}`,);
     }
 
     return result;
@@ -32,10 +32,10 @@ export class BookingController {
 
 
   @Get('bookings')
-  @Roles(3,2)
-@ApiOperation({ summary: 'Get all bookings for user or consultant' })
-async getBookings(  @Query() query: PaginationDto,@GetUser() user: any) {
-  return this.bookingService.findAllBookings( user,query);
-}
+  @Roles(3, 2)
+  @ApiOperation({ summary: 'Get all bookings for user or consultant' })
+  async getBookings(@Query() query: PaginationDto, @GetUser() user: any) {
+    return this.bookingService.findAllBookings(user, query);
+  }
 
 }

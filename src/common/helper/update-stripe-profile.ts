@@ -1,6 +1,10 @@
 import { Profile } from 'src/database/models/profile.model';
 import { StripeAccountStatus } from 'src/common/enums/account-status.enum';
 import Stripe from 'stripe';
+import { Booking } from 'src/database/models/booking.model';
+import { BookingStatus, BookingTransactionStatus } from '../enums/booking-status.enum';
+import { BookingTransaction } from 'src/database/models/bookingTransaction.model';
+import { NotFoundException } from '@nestjs/common';
 
 export async function updateStripeProfile(account: Stripe.Account): Promise<void> {
     const isVerified = account.charges_enabled && account.payouts_enabled;
@@ -31,4 +35,26 @@ export async function updateStripeProfile(account: Stripe.Account): Promise<void
     );
 
     console.log(`✅ stripeProfile updated for ${account.id}`);
+}
+
+export async function updateBookingPaymentStatus(paymentIntentId: string): Promise<void> {
+    const txn = await BookingTransaction.findOne({
+        where: { paymentIntentId },
+    });
+
+    if (!txn) {
+        throw new NotFoundException('Transaction not found');
+    }
+
+    await BookingTransaction.update(
+        {
+            status: BookingTransactionStatus.PAYMENT_SUCCESS
+        },
+        { where: { id: txn.id } }
+    );
+
+    await Booking.update(
+        { status: BookingStatus.CONFIRMED },
+        { where: { id: txn.bookingId } }
+    );
 }

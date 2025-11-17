@@ -62,28 +62,24 @@ export class Booking extends Model<Booking> {
     type: DataType.ENUM(...Object.values(BookingStatus)),
     allowNull: false,
     defaultValue: BookingStatus.PENDING,
-    comment: "Current status of the booking",
   })
   status: BookingStatus;
 
   @Column({
     type: DataType.TEXT,
     allowNull: true,
-    comment: "Any specific notes for the booking",
   })
   notes?: string;
 
   @Column({
     type: DataType.DECIMAL(10, 2),
     allowNull: true,
-    comment: "Total price for this booking",
   })
-  totalPrice?: number;
+  amount?: number;
 
   @Column({
     type: DataType.DATEONLY,
     allowNull: true,
-    comment: "Originally scheduled date (for tracking reschedules)",
   })
   scheduleDate?: Date;
 

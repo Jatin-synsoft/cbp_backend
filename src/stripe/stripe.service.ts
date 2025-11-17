@@ -6,11 +6,10 @@ import Stripe from 'stripe';
 export class StripeService {
   private stripe: Stripe;
 
-  constructor(private config: ConfigService) {
+  constructor(private config: ConfigService,) {
     this.stripe = new Stripe(this.config.get('STRIPE_SECRET_KEY'));
   }
 
-  // 🧩 1. Create Express Connected Account
   async createConnectedAccount(email: string) {
     try {
       const account = await this.stripe.accounts.create({
@@ -23,7 +22,6 @@ export class StripeService {
     }
   }
 
-  // 🔗 2. Generate Onboarding Link
   async createOnboardingLink(accountId: string) {
     try {
       const accountLink = await this.stripe.accountLinks.create({
@@ -38,7 +36,6 @@ export class StripeService {
     }
   }
 
-  // 💸 3. Transfer to Consultant (after completed session)
   async createTransfer(accountId: string, amount: number, currency = 'usd') {
     try {
       const transfer = await this.stripe.transfers.create({
@@ -52,12 +49,36 @@ export class StripeService {
     }
   }
 
-  // 🧾 4. Retrieve Account Status
   async getAccount(accountId: string) {
     try {
       return await this.stripe.accounts.retrieve(accountId);
     } catch (err) {
       throw new BadRequestException(err.message);
     }
+  }
+
+  async createSplitPaymentIntent(consultantAccountId: string, amount: number, currencyCode: string) {
+
+    const consultantStripeAccount = await this.stripe.accounts.retrieve(consultantAccountId);
+    if (!consultantStripeAccount) throw new BadRequestException('Consultant not found');
+
+    const adminFee = this.calculateAdminFee(amount);
+    const intent = await this.stripe.paymentIntents.create({
+      amount: amount,
+      currency: currencyCode,
+      payment_method_types: ['card'],
+
+      transfer_data: {
+        destination: consultantAccountId,
+      },
+
+      application_fee_amount: adminFee,
+    });
+    return { paymentIntentId: intent.id, clientSecret: intent.client_secret };
+  }
+
+  calculateAdminFee(amount: number) {
+    const percent = this.config.get('ADMIN_FEE');
+    return Math.round(amount * (percent / 100));
   }
 }

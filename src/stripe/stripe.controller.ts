@@ -1,70 +1,47 @@
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, UseGuards } from '@nestjs/common';
 import { StripeService } from './stripe.service';
-import { ApiTags, ApiOperation, ApiBody, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBody, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import { GetUser } from 'src/common/decorators/get-user.decorator';
+import { JwtRolesGuard } from 'src/common/Guards/roles.guard';
+import { CreateConnectedAccountDto, OnboardingLinkDto, PayoutDto, CreatePaymentIntentDto, } from "./dto/stripe.dto";
 
 @ApiTags('Stripe')
+@ApiBearerAuth()
 @Controller('stripe')
 export class StripeController {
   constructor(private readonly stripeService: StripeService) { }
 
-  // // 1️⃣ Create connected account
-  @Post('account')
-  @ApiOperation({ summary: 'Create a connected Stripe account for consultant' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        email: { type: 'string', example: 'consultant@example.com' },
-      },
-      required: ['email'],
-    },
-  })
-  async createAccount(@Body('email') email: string) {
-    const account = await this.stripeService.createConnectedAccount(email);
-    return { accountId: account.id };
-  }
-
-  // 2️⃣ Create onboarding link
   @Post('onboard')
-  @ApiOperation({ summary: 'Generate onboarding link for consultant' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        accountId: { type: 'string', example: 'acct_1QAbCdEfGh123456' },
-      },
-      required: ['accountId'],
-    },
-  })
-  async onboarding(@Body('accountId') accountId: string) {
-    const url = await this.stripeService.createOnboardingLink(accountId);
+  async onboarding(@Body() dto: OnboardingLinkDto) {
+    const url = await this.stripeService.createOnboardingLink(dto.accountId);
     return { url };
   }
 
-  @Post('payout')
-  @ApiOperation({ summary: 'Send payout to consultant after session completion' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        accountId: { type: 'string', example: 'acct_1QAbCdEfGh123456' },
-        amount: { type: 'number', example: 5000, description: 'Amount in INR (smallest currency unit e.g., paise)' },
-      },
-      required: ['accountId', 'amount'],
-    },
-  })
-  async payout(
-    @Body('accountId') accountId: string,
-    @Body('amount') amount: number,
-  ) {
-    const transfer = await this.stripeService.createTransfer(accountId, amount);
-    return { transfer };
-  }
+  // @Get('create-payment-intent/:id')
+  // @UseGuards(JwtRolesGuard)
+  // @ApiParam({ name: 'id', example: 'acct_1QAbCdEfGh123456' })
+  // async createPaymentIntent(@Param('id') id: string, @GetUser() user: any) {
+  //   return await this.stripeService.createSplitPaymentIntent(+id, user.id);
+  // }
 
-  @Get('account/:id')
-  @ApiOperation({ summary: 'Get Stripe connected account details/status' })
-  @ApiParam({ name: 'id', example: 'acct_1QAbCdEfGh123456', description: 'Stripe connected account ID' })
-  async getAccount(@Param('id') id: string) {
-    return await this.stripeService.getAccount(id);
-  }
+
+  // @Post('account')
+  // async createAccount(@Body() dto: CreateConnectedAccountDto) {
+  //   const account = await this.stripeService.createConnectedAccount(dto.email);
+  //   return { accountId: account.id };
+  // }
+
+  // @Get('account/:id')
+  // @ApiParam({ name: 'id', example: 'acct_1QAbCdEfGh123456' })
+  // async getAccount(@Param('id') id: string) {
+  //   return await this.stripeService.getAccount(id);
+  // }
+
+
+  // @Post('payout')
+  // async payout(@Body() dto: PayoutDto) {
+  //   const transfer = await this.stripeService.createTransfer(dto.accountId, dto.amount);
+  //   return { transfer };
+  // }
+
 }

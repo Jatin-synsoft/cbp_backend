@@ -11,6 +11,8 @@ import { ConsultantSpecialty } from './models/consultant_specialties.model';
 import { Currency } from './models/currencies.model';
 import { ConsultantSchedule } from './models/consultantSchedule.model';
 import { Booking } from './models/booking.model';
+import { ConsultantPayout } from './models/consultantPayout.model';
+import { BookingTransaction } from './models/bookingTransaction.model';
 
 @Module({
   imports: [
@@ -42,7 +44,9 @@ import { Booking } from './models/booking.model';
           ConsultantSpecialty,
           Currency,
           ConsultantSchedule,
-          Booking
+          Booking,
+          BookingTransaction,
+          ConsultantPayout
         ],
       }),
     }),
@@ -56,7 +60,9 @@ import { Booking } from './models/booking.model';
       ConsultantSpecialty,
       Currency,
       ConsultantSchedule,
-      Booking
+      Booking,
+      BookingTransaction,
+      ConsultantPayout
     ]),
   ],
   exports: [SequelizeModule], // Export so other modules can use @InjectModel
