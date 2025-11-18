@@ -19,7 +19,7 @@ async function bootstrap() {
 
   app.use('/stripe/webhook', express.raw({ type: 'application/json' }));
 
-  // app.use(express.json());
+  app.use(express.json());
 
   app.setGlobalPrefix('api', { exclude: ['/', '/stripe/webhook'] });
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
