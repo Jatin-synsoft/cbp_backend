@@ -27,21 +27,20 @@ export class StripePlatformWebhookController {
 
     @Post()
     async handlePlatformWebhook(
-        @Req() req: any,
+        @Req() req: Request,
         @Res() res: Response,
         @Headers('stripe-signature') sig: string,
     ) {
+        console.log(`🚀 ~ :34 ~ req:-->`, req)
         console.log('\n----------------------------------------');
         console.log('📥 Incoming Stripe Webhook (Platform)');
-        console.log('➡️  Signature Header:', sig);
-        console.log('➡️  Raw Body Exists:', !!req.rawBody);
         console.log('----------------------------------------\n');
 
         let event;
 
         try {
             event = this.stripe.webhooks.constructEvent(
-                req.rawBody,
+                req['rawBody'],
                 sig,
                 this.webhookSecret
             );
