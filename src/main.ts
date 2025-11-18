@@ -11,20 +11,21 @@ import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    bodyParser: false,
+    rawBody: true,   // <--- REQUIRED
   });
 
   const configService = app.get(ConfigService);
   const reflector = app.get(Reflector);
 
+  // Stripe Webhook MUST use raw body
   app.use('/stripe/webhook', express.raw({ type: 'application/json' }));
   app.use('/stripe/webhook/platform', express.raw({ type: 'application/json' }));
-  // app.use('/stripe/webhook/connect', express.raw({ type: 'application/json' }));
+  // app.use('/stripe/webhook/connect', express.raw({ type: 'application/json' })); // if needed
 
-  app.use(express.json());
+  // ❌ REMOVE express.json() completely
+  // app.use(express.json());    // DELETE THIS
 
-
-  app.setGlobalPrefix('api', { exclude: ['/', '/stripe/webhook'] });
+  app.setGlobalPrefix('api', { exclude: ['/', 'stripe/webhook', 'stripe/webhook/platform'] });
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.useGlobalInterceptors(new ResponseInterceptor(reflector));
   app.useGlobalFilters(new AllExceptionsFilter());
