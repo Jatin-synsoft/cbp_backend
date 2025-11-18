@@ -9,7 +9,8 @@ import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { Response } from 'express';
 import { updateBookingPaymentStatus, updateStripeProfile } from 'src/common/helper/update-stripe-profile';
-
+import { Request } from 'express';
+import { RawBodyRequest } from '@nestjs/common';
 @Controller('stripe/webhook/platform')
 export class StripePlatformWebhookController {
     private stripe: Stripe;
@@ -27,11 +28,11 @@ export class StripePlatformWebhookController {
 
     @Post()
     async handlePlatformWebhook(
-        @Req() req: Request,
+        @Req() req: RawBodyRequest<Request>,
         @Res() res: Response,
         @Headers('stripe-signature') sig: string,
     ) {
-        console.log(`🚀 ~ :34 ~ req:-->`, req)
+        console.log(`🚀 ~ :34 ~ req:-->`, req.rawBody)
         console.log('\n----------------------------------------');
         console.log('📥 Incoming Stripe Webhook (Platform)');
         console.log('----------------------------------------\n');
@@ -40,7 +41,7 @@ export class StripePlatformWebhookController {
 
         try {
             event = this.stripe.webhooks.constructEvent(
-                req['rawBody'],
+                req.rawBody,
                 sig,
                 this.webhookSecret
             );
