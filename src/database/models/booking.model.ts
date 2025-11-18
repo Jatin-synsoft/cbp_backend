@@ -13,6 +13,7 @@ import {
 import { User } from "./user.model";
 import { ConsultantSchedule } from "./consultantSchedule.model";
 import { BookingStatus } from "src/common/enums/booking-status.enum";
+import { Currency } from "./currencies.model";
 
 @Table({ tableName: "bookings", timestamps: true, })
 export class Booking extends Model<Booking> {
@@ -71,6 +72,10 @@ export class Booking extends Model<Booking> {
   })
   notes?: string;
 
+  @ForeignKey(() => Currency)
+  @Column({ type: DataType.BIGINT, allowNull: false, })
+  currencyId: number;
+
   @Column({
     type: DataType.DECIMAL(10, 2),
     allowNull: true,
@@ -89,5 +94,7 @@ export class Booking extends Model<Booking> {
   @BelongsTo(() => User, "customerId")
   customer: User;
 
+  @BelongsTo(() => Currency)
+  currency: Currency;
 }
 

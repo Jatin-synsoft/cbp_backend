@@ -30,7 +30,7 @@ export class BookingTransaction extends Model<BookingTransaction> {
     transactionId?: string;
 
     @ForeignKey(() => Currency)
-    @Column({ type: DataType.BIGINT, allowNull: false, })
+    @Column({ type: DataType.BIGINT, allowNull: true, })
     currencyId: number;
 
     @Column(DataType.INTEGER)

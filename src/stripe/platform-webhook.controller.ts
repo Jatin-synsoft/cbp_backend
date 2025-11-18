@@ -19,11 +19,6 @@ export class StripePlatformWebhookController {
     constructor(private config: ConfigService) {
         this.stripe = new Stripe(this.config.get('STRIPE_SECRET_KEY'));
         this.webhookSecret = this.config.get('STRIPE_PLATFORM_WEBHOOK_SECRET');
-
-        console.log('===============================');
-        console.log('🔥 Stripe Platform Webhook Loaded');
-        console.log('🔑 Webhook Secret:', this.webhookSecret);
-        console.log('===============================');
     }
 
     @Post()
@@ -32,10 +27,6 @@ export class StripePlatformWebhookController {
         @Res() res: Response,
         @Headers('stripe-signature') sig: string,
     ) {
-        console.log(`🚀 ~ :34 ~ req:-->`, req.body)
-        console.log('\n----------------------------------------');
-        console.log('📥 Incoming Stripe Webhook (Platform)');
-        console.log('----------------------------------------\n');
 
         let event;
 
@@ -46,9 +37,6 @@ export class StripePlatformWebhookController {
                 this.webhookSecret
             );
 
-            console.log('✅ Webhook Verified Successfully!');
-            console.log('📌 Event Type:', event.type);
-            console.log('📌 Event ID:', event.id);
 
         } catch (e: any) {
             console.log('❌ Webhook Verification Failed!');
@@ -59,21 +47,11 @@ export class StripePlatformWebhookController {
         switch (event.type) {
 
             case 'payment_intent.succeeded': {
-                const paymentIntent = event.data.object as Stripe.PaymentIntent;
-
-                console.log('\n💰 PAYMENT INTENT SUCCEEDED');
-                console.log('----------------------------------');
-                console.log('🆔 PaymentIntent ID:', paymentIntent.id);
-                console.log('💵 Amount:', paymentIntent.amount);
-                console.log('💱 Currency:', paymentIntent.currency);
-                console.log('👤 Consultant Account:', paymentIntent.transfer_data?.destination);
-                console.log('🏦 Admin Fee:', paymentIntent.application_fee_amount);
-                console.log('----------------------------------\n');
-
-                await updateBookingPaymentStatus(paymentIntent.id);
-
+                const pi = event.data.object as Stripe.PaymentIntent;
+                await updateBookingPaymentStatus(pi.id, pi);
                 break;
             }
+
 
             case 'charge.succeeded': {
                 console.log('\n💳 CHARGE SUCCEEDED');
@@ -81,6 +59,19 @@ export class StripePlatformWebhookController {
                 console.log('Charge ID:', event.data.object.id);
                 console.log('Amount:', event.data.object.amount);
                 console.log('----------------------------------\n');
+                break;
+            }
+
+            case 'transfer.created': {
+                const transfer = event.data.object as Stripe.Transfer;
+                console.log('➡️ Transfer to consultant created:', transfer.amount);
+                console.log('Consultant Account:', transfer.destination);
+                break;
+            }
+
+            case 'payout.paid': {
+                const payout = event.data.object as Stripe.Payout;
+                console.log('💸 Consultant bank payout:', payout.amount);
                 break;
             }
 
