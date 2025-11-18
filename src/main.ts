@@ -11,18 +11,18 @@ import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    bodyParser: false, // important for Stripe
+    bodyParser: false,
   });
 
   const configService = app.get(ConfigService);
   const reflector = app.get(Reflector);
 
-  // ⭐ Use RAW BODY ONLY for Stripe webhook
-  app.use('/stripe/webhook', express.raw({ type: '*/*' }));
+  app.use('/stripe/webhook', express.raw({ type: 'application/json' }));
+  app.use('/stripe/webhook/platform', express.raw({ type: 'application/json' }));
+  // app.use('/stripe/webhook/connect', express.raw({ type: 'application/json' }));
 
-  // ⭐ For all other routes, use JSON parser
-  app.use(express.json({ limit: '10mb' }));
-  app.use(express.urlencoded({ extended: true }));
+  app.use(express.json());
+
 
   app.setGlobalPrefix('api', { exclude: ['/', '/stripe/webhook'] });
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
@@ -36,16 +36,29 @@ async function bootstrap() {
     .setTitle('Consultant Booking Platform API')
     .setDescription('NestJS backend for a consultant booking and scheduling platform.')
     .setVersion('1.0')
-    .addBearerAuth()
+    .addBearerAuth({
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      name: 'JWT',
+      description: 'Enter JWT token',
+      in: 'header',
+    })
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document, {
-    swaggerOptions: { persistAuthorization: true },
+    swaggerOptions: {
+      persistAuthorization: true,
+      tagsSorter: 'alpha',
+      operationsSorter: 'alpha',
+    },
   });
 
-  await app.listen(configService.get('PORT') || 3000);
+  const port = configService.get<number>('PORT') || 3000;
+  await app.listen(port);
 
-  console.log(`🚀 Application is running on: http://localhost:${configService.get('PORT')}`);
+  console.log(`🚀 Application is running on: http://localhost:${port}`);
+  console.log(`📚 Swagger documentation: http://localhost:${port}/api`);
 }
 bootstrap();

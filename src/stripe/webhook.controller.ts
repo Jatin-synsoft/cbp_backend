@@ -18,7 +18,6 @@ export class StripeWebhookController {
     constructor(private config: ConfigService) {
         this.stripe = new Stripe(this.config.get('STRIPE_SECRET_KEY'));
         this.webhookSecret = this.config.get('STRIPE_WEBHOOK_SECRET');
-        console.log(`🚀 ~ :21 ~   this.webhookSecret :-->`,   this.webhookSecret )
     }
 
     @Post()
@@ -35,7 +34,6 @@ export class StripeWebhookController {
                 sig,
                 this.webhookSecret,
             );
-            console.log(`🚀 ~ :39 ~ event:-->`, event)
 
         } catch (err: any) {
             console.log('❌ Webhook signature verification failed.');
@@ -43,7 +41,6 @@ export class StripeWebhookController {
         }
         switch (event.type) {
             case 'payment_intent.succeeded': {
-                console.log('----callleddddddddddddddddddddddddddddddddddd');
                 const paymentIntent = event.data.object as Stripe.PaymentIntent;
                 await updateBookingPaymentStatus(paymentIntent.id);
                 console.log('💰 Payment successful!');
