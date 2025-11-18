@@ -33,6 +33,7 @@ export class StripePlatformWebhookController {
         @Headers('stripe-signature') sig: string,
     ) {
         console.log(`🚀 ~ :34 ~ req:-->`, req.rawBody)
+        console.log(`🚀 ~ :34 ~ req:-->`, req.body)
         console.log('\n----------------------------------------');
         console.log('📥 Incoming Stripe Webhook (Platform)');
         console.log('----------------------------------------\n');

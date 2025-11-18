@@ -8,19 +8,21 @@ import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
 import * as express from 'express';
+import * as bodyParser from 'body-parser';
+
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    rawBody: true, // Enable rawBody
+    bodyParser: false,
   });
 
   const configService = app.get(ConfigService);
   const reflector = app.get(Reflector);
 
   app.use('/stripe/webhook', express.raw({ type: 'application/json' }));
-  app.use('/stripe/webhook/platform', express.raw({ type: 'application/json' }));
+  app.use('/stripe/webhook/platform', bodyParser.raw({ type: 'application/json' }));
 
-  app.use(express.json());
+  app.use(bodyParser.json());
 
   app.setGlobalPrefix('api', {
     exclude: [
