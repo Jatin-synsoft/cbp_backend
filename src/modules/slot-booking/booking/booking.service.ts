@@ -19,6 +19,7 @@ import { StripeService } from 'src/stripe/stripe.service';
 import { Profile } from 'src/database/models/profile.model';
 import { Currency } from 'src/database/models/currencies.model';
 import { BookingTransaction } from 'src/database/models/bookingTransaction.model';
+import { StripeAccountStatus } from 'src/common/enums/account-status.enum';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -107,6 +108,7 @@ export class BookingService {
   // }
 
   async createBooking(bookingDto: CreateBookingDto, userId: number) {
+    console.log(`🚀 ~ :110 ~ bookingDto:-->`, bookingDto)
     const transaction = await this.sequelize.transaction();
 
     try {
@@ -118,18 +120,18 @@ export class BookingService {
           {
             model: this.profileModel,
             attributes: ['id', 'hourlyRate', 'currencyId', 'stripeAccountId', 'stripeAccountStatus'],
-            where: {
-              stripeAccountStatus: 'VERIFIED'
-            },
             include: [{
               model: this.currencyModel,
               attributes: ['id', 'code']
-            }]
+            }],
           },
         ]
       });
 
-      const consultantDB = consultant.get({ plain: true });
+      if (!consultant) throw new BadRequestException('Invalid Consultant')
+      if (consultant.profile.stripeAccountStatus !== StripeAccountStatus.VERIFIED) throw new BadRequestException('Stripe account not verified')
+
+      const consultantDB = consultant
       const consultantAccountId = consultantDB.profile.stripeAccountId;
       const bookingAmount = consultantDB.profile.hourlyRate * 100;
       const amount = consultantDB.profile.hourlyRate
@@ -171,6 +173,7 @@ export class BookingService {
           bookingDate: new Date(bookingDate),
           startTime: slotStart.format("HH:mm"),
           endTime: slotEnd.format("HH:mm"),
+          currencyId: consultantDB.profile.currency.id,
           notes,
           amount
         },

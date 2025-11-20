@@ -5,7 +5,7 @@ export class Currency extends Model<Currency> {
     @PrimaryKey
     @AutoIncrement
     @Column(DataType.BIGINT)
-    id: bigint;
+    id: number;
 
     @Unique
     @AllowNull(false)

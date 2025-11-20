@@ -28,16 +28,19 @@ export class StripeWebhookController {
     ) {
         let event: Stripe.Event;
 
+
         try {
             event = this.stripe.webhooks.constructEvent(
-                req['rawBody'],  // must use rawBody
+                req.body,
                 sig,
-                this.webhookSecret,
+                this.webhookSecret
             );
 
-        } catch (err: any) {
-            console.log('❌ Webhook signature verification failed.');
-            return res.status(400).send(`Webhook Error: ${err.message}`);
+
+        } catch (e: any) {
+            console.log('❌ Webhook Verification Failed!');
+            console.log('❌ Error:', e.message);
+            return res.status(400).send(`Webhook Error: ${e.message}`);
         }
         switch (event.type) {
             case 'account.updated': {

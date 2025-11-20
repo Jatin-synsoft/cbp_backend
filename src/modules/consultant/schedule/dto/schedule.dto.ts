@@ -23,4 +23,12 @@ export class GetAvailabilityDto {
     @IsOptional()
     @IsDateString()
     endDate?: string;
+
+    @ApiPropertyOptional({
+        example: 'Asia/Kolkata',
+        description: 'User timezone in IANA format (e.g., Asia/Kolkata, America/New_York)',
+    })
+    @IsOptional()
+    @IsString()
+    timezone?: string;
 }

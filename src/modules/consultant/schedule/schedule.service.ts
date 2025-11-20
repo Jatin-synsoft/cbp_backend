@@ -100,9 +100,9 @@ export class ScheduleService {
   }
 
   async getConsultantAvailability(userId: number, query: GetAvailabilityDto) {
-    const now = dayjs();
+    const { startDate, endDate, timezone } = query;
+    const userTZ = timezone || "UTC";
 
-    const { startDate, endDate } = query;
     // 1. Fetch schedules
     const schedules = await this.scheduleModel.findAll({
       where: { userId },
@@ -153,8 +153,7 @@ export class ScheduleService {
     generatedAvailability.forEach(({ date, slots }) => {
 
       slots.forEach((slot) => {
-        const isExpired = dayjs(slot.end).isBefore(now);
-
+        const isExpired = dayjs.tz(slot.end, userTZ).isBefore(dayjs().tz(userTZ));
         const isBooked = bookedSlots.some(
           (b) =>
             dayjs(b.start).isSame(slot.start) && dayjs(b.end).isSame(slot.end)
