@@ -5,15 +5,12 @@ import {
   DataType,
   PrimaryKey,
   AutoIncrement,
-  CreatedAt,
-  UpdatedAt,
   ForeignKey,
   BelongsTo,
 } from "sequelize-typescript";
 import { User } from "./user.model";
-import { ConsultantSchedule } from "./consultantSchedule.model";
-import { BookingStatus } from "src/common/enums/booking-status.enum";
 import { Currency } from "./currencies.model";
+import { BookingStatus } from "../../common/enums/booking-status.enum";
 
 @Table({ tableName: "bookings", timestamps: true, })
 export class Booking extends Model<Booking> {

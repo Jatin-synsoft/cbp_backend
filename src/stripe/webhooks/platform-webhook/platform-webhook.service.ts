@@ -17,19 +17,20 @@ export class PlatformWebhookService {
         this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     }
 
-    // ====================================================================================
-    // 1️⃣ PAYMENT INTENT SUCCEEDED
-    // ====================================================================================
     async handlePaymentIntentSucceeded(event: Stripe.Event) {
-        const pi = event.data.object as Stripe.PaymentIntent;
+        type PIWithCharges = Stripe.PaymentIntent & {
+            charges: Stripe.ApiList<Stripe.Charge>;
+        };
+
+        const paymentIntent = event.data.object as PIWithCharges;
 
         const transaction = await BookingTransaction.findOne({
-            where: { paymentIntentId: pi.id },
+            where: { paymentIntentId: paymentIntent.id },
             include: [Booking],
         });
 
         if (!transaction) {
-            this.logger.error(`No transaction found for PaymentIntent: ${pi.id}`);
+            this.logger.error(`No transaction found for PaymentIntent: ${paymentIntent.id}`);
             return;
         }
 
@@ -39,20 +40,45 @@ export class PlatformWebhookService {
 
         if (!booking) return;
 
-        // Update booking
+        // Update booking status
         await booking.update({ status: BookingStatus.CONFIRMED });
 
         // Update transaction
         await transaction.update({
             status: BookingTransactionStatus.PAYMENT_SUCCESS,
-            transactionId: pi.latest_charge.toString(),
-            rawResponse: pi,
+            transactionId: paymentIntent.latest_charge?.toString(),
+            rawResponse: paymentIntent,
         });
 
-        // Email to Consultant
+        // Extract charge
+        const charge = paymentIntent.charges?.data?.[0];
+        if (!charge) return;
+
+        // Stripe direct charge fields
+        const platformFee = charge.application_fee_amount ?? 0;
+        const consultantAmount = charge.amount - platformFee;
+
+        // ✔️ Transfer ID fix
+        const transferId =
+            typeof charge.transfer === "string"
+                ? charge.transfer
+                : charge.transfer?.id ?? null;
+
+        // Create payout entry
+        await ConsultantPayout.create({
+            bookingId: booking.id,
+            consultantId: booking.consultantId,
+            amount: consultantAmount,
+            currencyId: booking.currencyId,
+            platformFee: platformFee ?? 0,
+            stripeTransferId: transferId,
+            status: "pending"
+        });
+
+        // Email to consultant
         await this.mailService.sendMailTemplate({
             to: booking.consultant.email,
-            templateName: 'new-booking.html',
+            templateName: 'booking-received-consultant.html',
             context: {
                 fullName: booking.consultant.fullName,
                 customerName: booking.customer.fullName,
@@ -67,17 +93,11 @@ export class PlatformWebhookService {
         this.logger.log(`Payment intent handled for booking: ${booking.id}`);
     }
 
-    // ====================================================================================
-    // 2️⃣ CHARGE SUCCEEDED
-    // ====================================================================================
     async handleChargeSucceeded(event: Stripe.Event) {
         const charge = event.data.object as Stripe.Charge;
         this.logger.log(`Charge succeeded: ${charge.id}`);
     }
 
-    // ====================================================================================
-    // 3️⃣ TRANSFER CREATED → Consultant payout initiated
-    // ====================================================================================
     async handleTransferCreated(event: Stripe.Event) {
         const transfer = event.data.object as Stripe.Transfer;
 
@@ -94,9 +114,6 @@ export class PlatformWebhookService {
         this.logger.log(`Consultant transfer initiated: ${transfer.amount}`);
     }
 
-    // ====================================================================================
-    // 4️⃣ PAYOUT PAID → Consultant received money in bank
-    // ====================================================================================
     async handlePayoutPaid(event: Stripe.Event) {
         const payout = event.data.object as Stripe.Payout;
 
