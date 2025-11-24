@@ -88,6 +88,14 @@ export class Booking extends Model<Booking> {
   })
   scheduleDate?: Date;
 
+  @Column({
+    type: DataType.STRING(500),
+    allowNull: true,
+    comment: "Meeting link given by consultant",
+  })
+  meetingLink?: string;
+
+
   @BelongsTo(() => User, "consultantId")
   consultant: User;
 

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Meeting Link</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            background-color: #ffffff;
+            margin: 40px auto;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #1b75bc;
+            color: #ffffff;
+            text-align: center;
+            padding: 25px 15px;
+        }
+
+        .header h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .content {
+            padding: 30px;
+            color: #333333;
+            line-height: 1.6;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .content p {
+            margin: 10px 0;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: #1b75bc;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 10px 22px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 14px;
+            margin: 20px 0;
+        }
+
+        .footer {
+            background-color: #f9f9f9;
+            text-align: center;
+            padding: 15px;
+            font-size: 12px;
+            color: #777777;
+            border-top: 1px solid #eeeeee;
+        }
+
+        .brand {
+            color: #1b75bc;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <div class="header">
+            <h2>Hello {{fullName}},</h2>
+        </div>
+
+        <div class="content">
+
+            <!-- Dynamic message from backend -->
+            <p>{{messageText}}</p>
+
+            <p><strong>Booking Date:</strong> {{bookingDate}}</p>
+            <p><strong>Time:</strong> {{startTime}}</p>
+
+            <a href="{{meetingLink}}" class="btn">Join Meeting</a>
+
+            <p>If the button doesn't work, click or copy the link below:</p>
+            <p>{{meetingLink}}</p>
+
+            <p>Thank you,<br>The Boardtide Team</p>
+        </div>
+
+        <div class="footer">
+            © {{year}} Boardtide. All rights reserved.
+        </div>
+
+    </div>
+</body>
+
+</html>

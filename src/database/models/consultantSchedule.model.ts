@@ -10,7 +10,7 @@ import {
 } from 'sequelize-typescript';
 import { User } from './user.model';
 
-@Table({ tableName: 'consultantSchedule', timestamps: true, })
+@Table({ tableName: 'consultant_schedule', timestamps: true, })
 export class ConsultantSchedule extends Model<ConsultantSchedule> {
     @PrimaryKey
     @AutoIncrement

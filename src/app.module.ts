@@ -12,6 +12,7 @@ import { PublicModule } from './modules/public/public.module';
 import { ConsultantModule } from './modules/consultant/consultant.module';
 import { BookingModule } from './modules/slot-booking/booking/booking.module';
 import { StripeModule } from './stripe/stripe.module';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { StripeModule } from './stripe/stripe.module';
     ConsultantModule,
     BookingModule,
     StripeModule,
+    UserModule
   ],
   controllers: [AppController],
   providers: [AppService],

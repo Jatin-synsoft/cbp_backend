@@ -12,7 +12,7 @@ import { Booking } from "./booking.model";
 import { Currency } from "./currencies.model";
 import { BookingTransactionStatus } from "src/common/enums/booking-status.enum";
 
-@Table({ tableName: "bookingtransactions", timestamps: true })
+@Table({ tableName: "booking_transactions", timestamps: true })
 export class BookingTransaction extends Model<BookingTransaction> {
     @PrimaryKey
     @AutoIncrement

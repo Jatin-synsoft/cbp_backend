@@ -1,6 +1,6 @@
 import { Table, Column, Model, DataType, HasMany, PrimaryKey, AutoIncrement, BelongsToMany } from 'sequelize-typescript';
 import { User } from './user.model';
-import { UserRoles } from './user-roles.model';
+import { UserRoles } from './userRoles.model';
 export enum RoleType {
     ADMIN = "admin",
     CONSULTANT = "consultant",

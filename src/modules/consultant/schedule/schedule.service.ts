@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { UserRoles } from 'src/database/models/user-roles.model';
-import { ConsultantDocument } from 'src/database/models/consultant-documents.model';
-import { ConsultantSpecialty } from 'src/database/models/consultant_specialties.model';
+import { UserRoles } from 'src/database/models/userRoles.model';
+import { ConsultantDocument } from 'src/database/models/consultantDocuments.model';
+import { ConsultantSpecialty } from 'src/database/models/consultantSpecialties.model';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from 'src/database/models/user.model';
 import { Profile } from 'src/database/models/profile.model';

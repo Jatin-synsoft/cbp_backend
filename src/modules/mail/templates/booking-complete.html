@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Session Completed – Boardtide</title>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f4f7fa;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 35px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1b75bc, #16619b);
+            padding: 28px 20px;
+            text-align: center;
+            color: #ffffff;
+        }
+
+        .header h2 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .content {
+            padding: 35px 30px;
+            text-align: center;
+            font-size: 13px;
+            line-height: 1.7;
+            color: #444;
+        }
+
+        .content p {
+            margin: 10px 0;
+        }
+
+        .highlight {
+            color: #1b75bc;
+            font-weight: 600;
+        }
+
+        .btn {
+            display: inline-block;
+            background: #1b75bc;
+            color: #ffffff !important;
+            padding: 12px 26px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 22px;
+            transition: background 0.25s ease;
+        }
+
+        .btn:hover {
+            background: #145588;
+        }
+
+        .footer {
+            background: #f4f6f8;
+            text-align: center;
+            padding: 18px;
+            font-size: 11px;
+            color: #777;
+            border-top: 1px solid #e3e7eb;
+        }
+
+        .footer span {
+            color: #1b75bc;
+            font-weight: 600;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="header">
+            <h2>Your Session is Now Complete 🎉</h2>
+        </div>
+
+        <div class="content">
+
+            <p>Hi <span class="highlight">{{fullName}}</span>,</p>
+
+            <p>
+                Your consultation session with your Boardtide expert has been
+                <b>successfully completed.</b>
+            </p>
+
+            <p>
+                We hope the session added value and offered clarity to your business needs.
+            </p>
+
+            <p>
+                We would love to hear about your experience.
+                Please take a moment to share your feedback.
+            </p>
+
+            <a href="{{feedbackLink}}" class="btn">Share Your Feedback</a>
+
+            <p style="margin-top: 25px;">
+                You can also give your feedback directly from your<br>
+                <b>My Bookings</b> section on Boardtide.
+            </p>
+
+            <p>
+                Thank you for choosing <span class="highlight">Boardtide</span>.
+            </p>
+
+        </div>
+
+        <div class="footer">
+            © {{year}} <span>Boardtide</span>. All rights reserved.
+        </div>
+
+    </div>
+
+</body>
+
+</html>

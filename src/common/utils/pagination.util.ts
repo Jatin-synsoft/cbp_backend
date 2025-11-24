@@ -22,7 +22,7 @@ export async function paginate<T>(
   options: PaginationOptions,
   include: any[] = [],
   where: any = {},
-  attributes?: string[],
+  attributes?: any[],
 ): Promise<PaginationResult<T>> {
   const page = Number(options.page) > 0 ? Number(options.page) : 1;
   const limit = Number(options.limit) > 0 ? Number(options.limit) : 10;

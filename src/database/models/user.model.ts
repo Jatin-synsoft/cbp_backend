@@ -1,10 +1,11 @@
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo, HasOne, AutoIncrement, PrimaryKey, BelongsToMany, HasMany } from 'sequelize-typescript';
 import { Role } from './role.model';
 import { Profile } from './profile.model';
-import { UserRoles } from './user-roles.model';
-import { ConsultantDocument } from './consultant-documents.model';
-import { ConsultantSpecialty } from './consultant_specialties.model';
+import { UserRoles } from './userRoles.model';
+import { ConsultantDocument } from './consultantDocuments.model';
+import { ConsultantSpecialty } from './consultantSpecialties.model';
 import { UserStatus } from '../../common/enums/user-status.enum';
+import { ConsultantRating } from './consultantRating.model';
 
 @Table({
     tableName: 'users',
@@ -46,6 +47,12 @@ export class User extends Model {
 
     @HasMany(() => ConsultantSpecialty)
     consultantSpecialties: ConsultantSpecialty[];
+
+    @HasMany(() => ConsultantRating, { foreignKey: 'consultantId', as: 'receivedRatings' })
+    receivedRatings: ConsultantRating[];
+
+    @HasMany(() => ConsultantRating, { foreignKey: 'userId', as: 'givenRatings' })
+    givenRatings: ConsultantRating[];
 
 }
 

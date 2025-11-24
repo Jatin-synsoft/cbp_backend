@@ -3,7 +3,7 @@ import { AffindaService } from '../affinda/affinda.service';
 import { join } from 'path';
 import * as fs from 'fs';
 import { InjectModel } from '@nestjs/sequelize';
-import { ConsultantDocument } from 'src/database/models/consultant-documents.model';
+import { ConsultantDocument } from 'src/database/models/consultantDocuments.model';
 import { transformResumeResponse } from 'src/common/helper/resume-parser';
 @Injectable()
 export class UploadService {

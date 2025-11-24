@@ -5,14 +5,15 @@ import { User } from 'src/database/models/user.model';
 import { InjectModel } from '@nestjs/sequelize';
 import { Profile } from 'src/database/models/profile.model';
 import { Role } from 'src/database/models/role.model';
-import { UserRoles } from 'src/database/models/user-roles.model';
-import { ConsultantDocument } from 'src/database/models/consultant-documents.model';
-import { ConsultantSpecialty } from 'src/database/models/consultant_specialties.model';
+import { UserRoles } from 'src/database/models/userRoles.model';
+import { ConsultantDocument } from 'src/database/models/consultantDocuments.model';
+import { ConsultantSpecialty } from 'src/database/models/consultantSpecialties.model';
 import { SpecialtiesMst } from 'src/database/models/specialtiesMst.model';
 import { Op, Sequelize } from 'sequelize';
 import { Currency } from 'src/database/models/currencies.model';
 import { paginate } from 'src/common/utils/pagination.util';
 import { GetConsultantsQueryDto } from 'src/common/dtos/pagination.dto';
+import { ConsultantRating } from 'src/database/models/consultantRating.model';
 
 @Injectable()
 export class PublicService {
@@ -25,8 +26,8 @@ export class PublicService {
     @InjectModel(ConsultantDocument) private documentModel: typeof ConsultantDocument,
     @InjectModel(ConsultantSpecialty) private specialtyModel: typeof ConsultantSpecialty,
     @InjectModel(SpecialtiesMst) private specialtymasterModel: typeof SpecialtiesMst,
-    @InjectModel(Currency) private currencyModel: typeof Currency
-
+    @InjectModel(Currency) private currencyModel: typeof Currency,
+    @InjectModel(ConsultantRating) private ratingModel: typeof ConsultantRating
   ) { }
 
   async getSpecialties() {
@@ -56,9 +57,6 @@ export class PublicService {
       status: 'ACTIVE',
     };
 
-    // -------------------------------
-    // Include definitions
-    // -------------------------------
     const include: any[] = [
       {
         model: this.roleModel,
@@ -97,11 +95,14 @@ export class PublicService {
           },
         ],
       },
+      {
+        model: this.ratingModel,
+        as: 'receivedRatings',
+        attributes: ['note', 'rating', 'userId', 'createdAt'],
+      }
+
     ];
 
-    // -------------------------------
-    // Unified Search: fullName OR profile fields (skills, qualification, city, state)
-    // -------------------------------
     if (search) {
       const profileInclude = include.find((i) => i.model === this.profileModel);
 
@@ -125,9 +126,6 @@ export class PublicService {
       Object.assign(where, searchCondition);
     }
 
-    // -------------------------------
-    // Filter by specific skills (array or single)
-    // -------------------------------
     if (skills) {
       const skillArray = Array.isArray(skills) ? skills : [skills];
       const profileInclude = include.find((i) => i.model === this.profileModel);
@@ -144,15 +142,35 @@ export class PublicService {
       }
     }
 
-    // -------------------------------
-    // Final query with pagination
-    // -------------------------------
     const result = await paginate(
       this.userModel,
       query,
       include,
       where,
-      ['id', 'email', 'fullName', 'phone', 'status', 'isVerified']
+      [
+        'id',
+        'email',
+        'fullName',
+        'phone',
+        'status',
+        'isVerified',
+        [
+          Sequelize.literal(`(
+              SELECT 
+                COALESCE(
+                  ROUND( 
+                    AVG(rating), 
+                    1
+                  ), 
+                  0
+                )
+              FROM consultant_ratings
+              WHERE consultant_ratings.consultantId = User.id
+            )`),
+          'averageRating'
+        ]
+
+      ]
     );
 
     return {

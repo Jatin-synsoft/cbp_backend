@@ -13,9 +13,13 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) { }
 
-  @Patch(':id/status')
-  @ApiOperation({ summary: 'Consultant updates booking status' })
-  async updateBookingStatus(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateBookingStatusDto,) {
+  @Patch(':id')
+  @ApiOperation({ summary: 'Consultant updates booking status or meeting link' })
+  async updateBookingStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateBookingStatusDto,
+  ) {
     return this.bookingsService.updateBookingStatus(id, dto);
   }
+
 }

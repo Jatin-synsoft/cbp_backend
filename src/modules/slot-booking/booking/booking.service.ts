@@ -108,7 +108,6 @@ export class BookingService {
   // }
 
   async createBooking(bookingDto: CreateBookingDto, userId: number) {
-    console.log(`🚀 ~ :110 ~ bookingDto:-->`, bookingDto)
     const transaction = await this.sequelize.transaction();
 
     try {

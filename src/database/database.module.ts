@@ -4,15 +4,16 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { User } from './models/user.model';
 import { Profile } from './models/profile.model';
 import { Role } from './models/role.model';
-import { UserRoles } from './models/user-roles.model';
+import { UserRoles } from './models/userRoles.model';
 import { SpecialtiesMst } from './models/specialtiesMst.model';
-import { ConsultantDocument } from './models/consultant-documents.model';
-import { ConsultantSpecialty } from './models/consultant_specialties.model';
+import { ConsultantDocument } from './models/consultantDocuments.model';
+import { ConsultantSpecialty } from './models/consultantSpecialties.model';
 import { Currency } from './models/currencies.model';
 import { ConsultantSchedule } from './models/consultantSchedule.model';
 import { Booking } from './models/booking.model';
 import { ConsultantPayout } from './models/consultantPayout.model';
 import { BookingTransaction } from './models/bookingTransaction.model';
+import { ConsultantRating } from './models/consultantRating.model';
 
 @Module({
   imports: [
@@ -27,9 +28,9 @@ import { BookingTransaction } from './models/bookingTransaction.model';
         username: configService.get<string>("DATABASE_USERNAME"),
         password: configService.get<string>("DATABASE_PASSWORD") || '',
         database: configService.get<string>("DATABASE_NAME"),
-        autoLoadModels: true, // Automatically registers models
+        autoLoadModels: true,
         // synchronize: true,
-        // alter: true, // safer
+        // alter: true,
         // define: {
         //   charset: "utf8mb4",
         //   collate: "utf8mb4_unicode_ci",   
@@ -46,7 +47,8 @@ import { BookingTransaction } from './models/bookingTransaction.model';
           ConsultantSchedule,
           Booking,
           BookingTransaction,
-          ConsultantPayout
+          ConsultantPayout,
+          ConsultantRating
         ],
       }),
     }),
@@ -62,7 +64,8 @@ import { BookingTransaction } from './models/bookingTransaction.model';
       ConsultantSchedule,
       Booking,
       BookingTransaction,
-      ConsultantPayout
+      ConsultantPayout,
+      ConsultantRating
     ]),
   ],
   exports: [SequelizeModule], // Export so other modules can use @InjectModel

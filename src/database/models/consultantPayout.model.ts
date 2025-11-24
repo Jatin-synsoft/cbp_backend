@@ -13,7 +13,7 @@ import { Booking } from "./booking.model";
 import { Currency } from "./currencies.model";
 import { User } from "./user.model";
 
-@Table({ tableName: "consultantpayouts", timestamps: true })
+@Table({ tableName: "consultant_payouts", timestamps: true })
 export class ConsultantPayout extends Model<ConsultantPayout> {
     @PrimaryKey
     @AutoIncrement
