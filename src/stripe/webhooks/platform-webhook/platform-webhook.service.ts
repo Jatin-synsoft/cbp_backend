@@ -52,17 +52,31 @@ export class PlatformWebhookService {
 
         // Extract charge
         const charge = paymentIntent.charges?.data?.[0];
+        console.log(`🚀 ~ :55 ~ charge:-->`, charge)
         if (!charge) return;
 
         // Stripe direct charge fields
         const platformFee = charge.application_fee_amount ?? 0;
+        console.log(`🚀 ~ :60 ~ platformFee:-->`, platformFee)
         const consultantAmount = charge.amount - platformFee;
+        console.log(`🚀 ~ :61 ~ consultantAmount:-->`, consultantAmount)
 
         // ✔️ Transfer ID fix
         const transferId =
             typeof charge.transfer === "string"
                 ? charge.transfer
                 : charge.transfer?.id ?? null;
+        console.log(`🚀 ~ :63 ~ transferId:-->`, transferId)
+
+        console.log(`---- transferId: ${transferId}`, {
+            bookingId: booking.id,
+            consultantId: booking.consultantId,
+            amount: consultantAmount,
+            currencyId: booking.currencyId,
+            platformFee: platformFee ?? 0,
+            stripeTransferId: transferId,
+            status: "pending"
+        })
 
         // Create payout entry
         await ConsultantPayout.create({
