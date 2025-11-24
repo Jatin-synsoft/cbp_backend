@@ -18,19 +18,15 @@ export class PlatformWebhookService {
     }
 
     async handlePaymentIntentSucceeded(event: Stripe.Event) {
-        type PIWithCharges = Stripe.PaymentIntent & {
-            charges: Stripe.ApiList<Stripe.Charge>;
-        };
-
-        const paymentIntent = event.data.object as PIWithCharges;
+        const pi = event.data.object as Stripe.PaymentIntent;
 
         const transaction = await BookingTransaction.findOne({
-            where: { paymentIntentId: paymentIntent.id },
+            where: { paymentIntentId: pi.id },
             include: [Booking],
         });
 
         if (!transaction) {
-            this.logger.error(`No transaction found for PaymentIntent: ${paymentIntent.id}`);
+            this.logger.error(`No transaction found for PaymentIntent: ${pi.id}`);
             return;
         }
 
@@ -40,56 +36,16 @@ export class PlatformWebhookService {
 
         if (!booking) return;
 
-        // Update booking status
+        // Update booking
         await booking.update({ status: BookingStatus.CONFIRMED });
 
         // Update transaction
         await transaction.update({
             status: BookingTransactionStatus.PAYMENT_SUCCESS,
-            transactionId: paymentIntent.latest_charge?.toString(),
-            rawResponse: paymentIntent,
+            transactionId: pi.latest_charge.toString(),
+            rawResponse: pi,
         });
-
-        // Extract charge
-        const charge = paymentIntent.charges?.data?.[0];
-        console.log(`🚀 ~ :55 ~ charge:-->`, charge)
-        if (!charge) return;
-
-        // Stripe direct charge fields
-        const platformFee = charge.application_fee_amount ?? 0;
-        console.log(`🚀 ~ :60 ~ platformFee:-->`, platformFee)
-        const consultantAmount = charge.amount - platformFee;
-        console.log(`🚀 ~ :61 ~ consultantAmount:-->`, consultantAmount)
-
-        // ✔️ Transfer ID fix
-        const transferId =
-            typeof charge.transfer === "string"
-                ? charge.transfer
-                : charge.transfer?.id ?? null;
-        console.log(`🚀 ~ :63 ~ transferId:-->`, transferId)
-
-        console.log(`---- transferId: ${transferId}`, {
-            bookingId: booking.id,
-            consultantId: booking.consultantId,
-            amount: consultantAmount,
-            currencyId: booking.currencyId,
-            platformFee: platformFee ?? 0,
-            stripeTransferId: transferId,
-            status: "pending"
-        })
-
-        // Create payout entry
-        await ConsultantPayout.create({
-            bookingId: booking.id,
-            consultantId: booking.consultantId,
-            amount: consultantAmount,
-            currencyId: booking.currencyId,
-            platformFee: platformFee ?? 0,
-            stripeTransferId: transferId,
-            status: "pending"
-        });
-
-        // Email to consultant
+        // Email to Consultant
         await this.mailService.sendMailTemplate({
             to: booking.consultant.email,
             templateName: 'booking-received-consultant.html',
@@ -109,55 +65,135 @@ export class PlatformWebhookService {
 
     async handleChargeSucceeded(event: Stripe.Event) {
         const charge = event.data.object as Stripe.Charge;
+        console.log("\n================= 🔵 CHARGE.SUCCEEDED RECEIVED =================");
+        console.log("Raw charge object =>", charge);
+
+        if (!charge) return;
+
+        // 1️⃣ Normalize PaymentIntent ID
+        const paymentIntentId =
+            typeof charge.payment_intent === "string"
+                ? charge.payment_intent
+                : charge.payment_intent?.id;
+
+        console.log("Extracted PaymentIntent ID =>", paymentIntentId);
+
+        if (!paymentIntentId) {
+            console.error("❌ ERROR: No valid PaymentIntent ID found in charge event");
+            return;
+        }
+
+        // 2️⃣ Fees & payout calculations
+        const platformFee = charge.application_fee_amount ?? 0;
+        const consultantAmount = charge.amount - platformFee;
+
+        console.log("Charge Amount =>", charge.amount);
+        console.log("Platform Fee =>", platformFee);
+        console.log("Consultant Amount =>", consultantAmount);
+
+        // 3️⃣ Find related transaction
+        const transaction = await BookingTransaction.findOne({
+            where: { paymentIntentId },
+            include: [Booking],
+        });
+
+        console.log("Fetched BookingTransaction =>", transaction);
+
+        if (!transaction) {
+            console.error(`❌ ERROR: No transaction found for PaymentIntent: ${paymentIntentId}`);
+            return;
+        }
+
+        const booking = transaction.booking;
+        console.log("Related Booking =>", booking);
+
+        // 4️⃣ Create Consultant Payout Entry
+        const payout = await ConsultantPayout.create({
+            bookingId: booking.id,
+            consultantId: booking.consultantId,
+            amount: consultantAmount,
+            currencyId: booking.currencyId,
+            platformFee: platformFee,
+            stripeTransferId: charge.id,
+            status: "PENDING",
+        });
+
+        console.log("🟢 Consultant Payout Created =>", payout.dataValues);
+        console.log("================================================================\n");
+
         this.logger.log(`Charge succeeded: ${charge.id}`);
     }
 
+
+
     async handleTransferCreated(event: Stripe.Event) {
         const transfer = event.data.object as Stripe.Transfer;
+        console.log("\n================= 🔵 TRANSFER.CREATED RECEIVED =================");
+        console.log("Raw Transfer object =>", transfer);
 
-        await ConsultantPayout.create({
-            bookingId: +transfer.metadata.bookingId,
-            consultantId: +transfer.metadata.consultantId,
-            currencyId: +transfer.metadata.currencyId,
-            amount: transfer.amount,
-            platformFee: +transfer.metadata.platformFee,
-            stripeTransferId: transfer.id,
-            status: 'TRANSFER_SENT',
-        });
+        const updated = await ConsultantPayout.update(
+            {
+                status: "TRANSFER_SENT",
+            },
+            {
+                where: { stripeTransferId: transfer.id },
+            }
+        );
+
+        console.log("Update result =>", updated);
+        console.log(`🟢 Consultant payout marked as TRANSFER_SENT for transferId: ${transfer.id}`);
+        console.log("================================================================\n");
 
         this.logger.log(`Consultant transfer initiated: ${transfer.amount}`);
     }
 
+
+
     async handlePayoutPaid(event: Stripe.Event) {
         const payout = event.data.object as Stripe.Payout;
+        console.log("\n================= 🔵 PAYOUT.PAID RECEIVED =================");
+        console.log("Raw Payout object =>", payout);
 
         if (!payout.balance_transaction) {
-            this.logger.error('No balance transaction found in payout event');
+            console.error("❌ ERROR: payout.balance_transaction missing");
             return;
         }
 
-        // Get balance transaction from stripe
+        // 1️⃣ Fetch balance transaction to get transfer source
         const bt = await this.stripe.balanceTransactions.retrieve(
             payout.balance_transaction as string,
         );
 
+        console.log("Balance Transaction =>", bt);
+
         const transferId = bt.source;
+
         if (!transferId) {
-            this.logger.error('No transfer id linked to payout');
+            console.error("❌ ERROR: No transfer ID found in balance transaction");
             return;
         }
 
+        console.log("Resolved Transfer ID =>", transferId);
+
+        // 2️⃣ Find payout record
         const payoutRecord = await ConsultantPayout.findOne({
             where: { stripeTransferId: transferId.toString() },
         });
 
+        console.log("Fetched ConsultantPayout Record =>", payoutRecord);
+
         if (!payoutRecord) {
-            this.logger.error(`No payout record found for transfer: ${transferId}`);
+            console.error(`❌ ERROR: No payout record found for transfer: ${transferId}`);
             return;
         }
 
-        await payoutRecord.update({ status: 'PAID' });
+        // 3️⃣ Update to PAID
+        await payoutRecord.update({ status: "PAID" });
+
+        console.log(`🟢 Consultant payout updated to PAID (ID: ${payoutRecord.id})`);
+        console.log("================================================================\n");
 
         this.logger.log(`Consultant payout marked as PAID: ${payoutRecord.id}`);
     }
+
 }
