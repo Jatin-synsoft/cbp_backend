@@ -35,8 +35,21 @@ export class AuthService {
   ) { }
 
   async register(dto: SignupDto) {
-    const existing = await this.userModel.findOne({ where: { email: dto.email } });
-    if (existing) throw new BadRequestException('Email already exists');
+    const existing = await this.userModel.findOne({
+      where: {
+        [Op.or]: [{ email: dto.email }, { phone: dto.phone }],
+      },
+    });
+
+    if (existing) {
+      if (existing.email === dto.email) {
+        throw new BadRequestException('Email already exists');
+      }
+      if (existing.phone === dto.phone) {
+        throw new BadRequestException('Phone number already exists');
+      }
+    }
+
 
     const hashed = await bcrypt.hash(dto.password, 10);
 
@@ -102,17 +115,26 @@ export class AuthService {
   async verifyEmail(token: string) {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET) as { userId: number; email: string };
-      const user = await this.userModel.findByPk(decoded.userId);
+
+      const user = await this.userModel.findByPk(decoded.userId, {
+        include: [{ model: this.roleModel }],
+      });
       if (!user) throw new NotFoundException('User not found');
 
       if (user.status === UserStatus.ACTIVE) {
-        return { message: 'Email already verified' };
+        const role = user.roles?.[0]?.name || 'user';
+        return { message: 'Email already verified', role };
       }
 
       user.status = UserStatus.ACTIVE;
       await user.save();
 
-      return { message: 'Email verified successfully' };
+      const role = user.roles?.[0]?.name || 'user';
+
+      return {
+        message: 'Email verified successfully',
+        role,
+      };
     } catch (err) {
       throw new BadRequestException('Invalid or expired token');
     }
@@ -154,7 +176,7 @@ export class AuthService {
       }
 
       if (!user.isVerified) {
-        throw new ForbiddenException('Document verification in progress. Please try again later.');
+        throw new ForbiddenException('Profile under review. Please wait for approval.');
       }
     } else {
       if (user.status !== UserStatus.ACTIVE) {

@@ -60,12 +60,19 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Invalid or expired token' })
   async verifyEmail(@Query('token') token: string, @Res() res: Response) {
     try {
-      await this.authService.verifyEmail(token);
-      return res.redirect(`${process.env.FRONTEND_URL}/auth/verify-email/successfull`);
+      const result = await this.authService.verifyEmail(token);
+
+      const roleSlug = result.role?.toLowerCase() || 'user';
+
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/auth/verify-email/successfull?role=${roleSlug}`
+      );
+
     } catch (err) {
       return res.redirect(`${process.env.FRONTEND_URL}`);
     }
   }
+
 
 
   @Post('seed-super-admin')

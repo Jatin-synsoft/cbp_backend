@@ -21,6 +21,7 @@ import { RRule, RRuleSet, rrulestr } from 'rrule';
 import { frequencyMap } from 'src/common/enums/frequency';
 import { weekDays } from 'src/common/enums/dayofweeek.enum';
 import { GetAvailabilityDto, ScheduleDto } from './dto/schedule.dto';
+import { BookingStatus } from 'src/common/enums/booking-status.enum';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -136,6 +137,7 @@ export class ScheduleService {
     // 3. Fetch existing bookings for provider in range
     const existingBookings = await this.bookingModel.findAll({
       where: {
+        status: BookingStatus.CONFIRMED,
         consultantId: userId,
         scheduleDate: {
           [Op.between]: [startDate, endDate],

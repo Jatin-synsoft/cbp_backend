@@ -45,6 +45,7 @@ export class PlatformWebhookService {
             transactionId: pi.latest_charge.toString(),
             rawResponse: pi,
         });
+
         // Email to Consultant
         await this.mailService.sendMailTemplate({
             to: booking.consultant.email,
@@ -52,9 +53,9 @@ export class PlatformWebhookService {
             context: {
                 consultantName: booking.consultant.fullName,
                 userFullName: booking.customer.fullName,
-                bookingDate: booking.bookingDate,
-                startTime: booking.startTime,
-                amount: transaction.amount / 100,
+                scheduleDate: booking.scheduleDate,
+                time: `${booking.startTime.slice(0, 5)} - ${booking.endTime.slice(0, 5)}`,
+                amount: transaction.amount,
                 year: new Date().getFullYear(),
             },
             sendAsync: true,
@@ -111,9 +112,9 @@ export class PlatformWebhookService {
         const payout = await ConsultantPayout.create({
             bookingId: booking.id,
             consultantId: booking.consultantId,
-            amount: consultantAmount,
+            amount: consultantAmount / 100,
             currencyId: booking.currencyId,
-            platformFee: platformFee,
+            platformFee: platformFee / 100,
             stripeTransferId: charge.id,
             status: "PENDING",
         });
