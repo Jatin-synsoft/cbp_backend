@@ -18,5 +18,5 @@ export function createFileStream(filePath: string): fs.ReadStream {
 
 export function getFileUrl(filePath: string): string {
     const fileName = basename(filePath);
-    return `http://192.168.0.175:3000/uploads/resumes/${fileName}`;
+    return `${process.env.BACKEND_URL}/uploads/resumes/${fileName}`;
 }

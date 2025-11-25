@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>New Booking Received</title>
+    <title>Booking Confirmation</title>
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -43,10 +43,6 @@
             font-size: 13px;
         }
 
-        .content p {
-            margin: 8px 0;
-        }
-
         .details {
             margin: 20px auto;
             display: inline-block;
@@ -61,22 +57,6 @@
 
         .details p {
             margin: 5px 0;
-        }
-
-        .btn {
-            display: inline-block;
-            background-color: #1b75bc;
-            color: #ffffff;
-            text-decoration: none;
-            padding: 10px 22px;
-            border-radius: 6px;
-            font-weight: 500;
-            font-size: 12px;
-            margin: 20px 0;
-        }
-
-        .btn:hover {
-            background-color: #17649e;
         }
 
         .footer {
@@ -107,21 +87,20 @@
                 A new session has been booked with you on
                 <span class="brand">Boardtide</span>.
             </p>
+
             <p>Here are the booking details:</p>
 
             <div class="details">
                 <p><strong>Booked By:</strong> {{userFullName}}</p>
-                <p><strong>Email:</strong> {{userEmail}}</p>
                 <p><strong>Date:</strong> {{bookingDate}}</p>
-                <p><strong>Slot:</strong> {{slotTime}}</p>
+                <p><strong>Start Time:</strong> {{startTime}}</p>
+                <p><strong>Amount Paid:</strong> ${{amount}}</p>
             </div>
 
             <p>
-                Please confirm the booking or view more details in your
-                <a href="{{consultantDashboardUrl}}" class="brand">Consultant Dashboard</a>.
+                Please check your consultant portal for meeting link, user details
+                and full booking information.
             </p>
-
-            <a href="{{consultantDashboardUrl}}" class="btn">View Booking</a>
 
             <p>Best regards,<br />The Boardtide Team</p>
         </div>

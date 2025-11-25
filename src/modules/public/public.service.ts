@@ -31,13 +31,17 @@ export class PublicService {
   ) { }
 
   async getSpecialties() {
-    const specialties = await this.specialtymasterModel.findAll();
+    const specialties = await this.specialtymasterModel.findAll({
+      order: [['name', 'ASC']], // Alphabetical order
+    });
+
     return {
       statusCode: 200,
       message: 'Specialties fetched successfully',
       data: specialties,
     };
   }
+
 
   async getCurrecncy() {
     const currency = await this.currencyModel.findAll();

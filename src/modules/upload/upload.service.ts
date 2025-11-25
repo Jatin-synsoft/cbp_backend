@@ -31,7 +31,7 @@ export class UploadService {
 
     async resumeParser(file: any, userId: number) {
         try {
-            const fileUrl = `${'http://192.168.0.175:3000'}/${file.path.replace(/\\/g, '/')}`;
+            const fileUrl = `${process.env.BACKEND_URL}/${file.path.replace(/\\/g, '/')}`;
 
             const filePath = join(process.cwd(), file.path);
             const fileStream = fs.createReadStream(filePath);

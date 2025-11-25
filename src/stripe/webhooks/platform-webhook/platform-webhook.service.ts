@@ -50,8 +50,8 @@ export class PlatformWebhookService {
             to: booking.consultant.email,
             templateName: 'booking-received-consultant.html',
             context: {
-                fullName: booking.consultant.fullName,
-                customerName: booking.customer.fullName,
+                consultantName: booking.consultant.fullName,
+                userFullName: booking.customer.fullName,
                 bookingDate: booking.bookingDate,
                 startTime: booking.startTime,
                 amount: transaction.amount / 100,
