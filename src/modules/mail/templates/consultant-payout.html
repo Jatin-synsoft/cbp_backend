@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Booking Confirmation</title>
+    <title>Consultant Payout Summary</title>
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -39,14 +39,11 @@
             padding: 30px;
             color: #333333;
             line-height: 1.6;
-            text-align: center;
             font-size: 13px;
         }
 
         .details {
-            margin: 20px auto;
-            display: inline-block;
-            text-align: left;
+            margin: 20px 0;
             background-color: #f9fafc;
             border: 1px solid #e4e6eb;
             border-radius: 8px;
@@ -56,7 +53,7 @@
         }
 
         .details p {
-            margin: 5px 0;
+            margin: 6px 0;
         }
 
         .footer {
@@ -78,27 +75,33 @@
 <body>
     <div class="container">
         <div class="header">
-            <h2>New Booking Received!</h2>
+            <h2>Payment Received for Your Session</h2>
         </div>
 
         <div class="content">
             <p>Hi {{consultantName}},</p>
+
             <p>
-                A new session has been booked with you on
+                A new booking payment has been successfully processed on
                 <span class="brand">Boardtide</span>.
             </p>
 
-            <p>Here are the booking details:</p>
+            <p>Here is the payment and earnings summary:</p>
 
             <div class="details">
+                <p><strong>Total Amount Paid by User:</strong> {{currencySymbol}}{{totalAmount}}</p>
+                <p><strong>Platform Fee:</strong> {{currencySymbol}}{{platformFee}}</p>
+                <p><strong>Your Earnings:</strong> {{currencySymbol}}{{consultantReceives}}</p>
+                <hr />
                 <p><strong>Booked By:</strong> {{userFullName}}</p>
                 <p><strong>Schedule Date:</strong> {{scheduleDate}}</p>
                 <p><strong>Schedule Time:</strong> {{time}}</p>
             </div>
 
             <p>
-                Please check your consultant portal for meeting link, user details
-                and full booking information.
+                Your payout will be processed automatically once the Stripe
+                transfer is completed. You can view this payment and all past
+                earnings in your consultant portal.
             </p>
 
             <p>Best regards,<br />The Boardtide Team</p>

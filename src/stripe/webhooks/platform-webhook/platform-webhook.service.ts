@@ -64,9 +64,6 @@ export class PlatformWebhookService {
                 userFullName: booking.customer.fullName,
                 scheduleDate: booking.scheduleDate,
                 time: `${booking.startTime.slice(0, 5)} - ${booking.endTime.slice(0, 5)}`,
-                receivedAmount: `${booking.currency.symbol} ${booking.consultantPayout?.amount ?? 0}`,
-                platformFee: `${booking.currency.symbol} ${booking.consultantPayout?.platformFee ?? 0}`,
-                totalAmount: `${booking.currency.symbol} ${transaction.amount}`,
                 year: new Date().getFullYear(),
             },
             sendAsync: true,
@@ -136,29 +133,72 @@ export class PlatformWebhookService {
         this.logger.log(`Charge succeeded: ${charge.id}`);
     }
 
-
-
     async handleTransferCreated(event: Stripe.Event) {
         const transfer = event.data.object as Stripe.Transfer;
+
         console.log("\n================= 🔵 TRANSFER.CREATED RECEIVED =================");
         console.log("Raw Transfer object =>", transfer);
 
-        const updated = await ConsultantPayout.update(
-            {
-                status: "TRANSFER_SENT",
-            },
-            {
-                where: { stripeTransferId: transfer.id },
-            }
+        // 1️⃣ Fetch payout entry using transfer ID
+        const payout = await ConsultantPayout.findOne({
+            where: { stripeTransferId: transfer.id },
+            include: [
+                {
+                    model: Booking,
+                    include: ['consultant', 'customer', 'currency'], // adjust based on your relations
+                },
+            ],
+        });
+
+        if (!payout) {
+            console.error(`❌ No ConsultantPayout found for transferId: ${transfer.id}`);
+            return;
+        }
+
+        const booking = payout.booking;
+
+        if (!booking) {
+            console.error(`❌ No booking linked to payoutId ${payout.id}`);
+            return;
+        }
+
+        // 2️⃣ Update payout status
+        await ConsultantPayout.update(
+            { status: "TRANSFER_SENT" },
+            { where: { stripeTransferId: transfer.id } }
         );
 
-        console.log("Update result =>", updated);
+        console.log("Update result => Payout status updated to TRANSFER_SENT");
+
+        // 3️⃣ Prepare values
+        const totalAmount = payout.amount + payout.platformFee;
+        const platformFee = payout.platformFee;
+        const consultantReceives = payout.amount;
+        const currencySymbol = booking.currency?.symbol || "$";
+
+        await this.mailService.sendMailTemplate({
+            to: booking.consultant.email,
+            templateName: "consultant-payout.html",
+            context: {
+                consultantName: booking.consultant.fullName,
+                userFullName: booking.customer.fullName,
+                scheduleDate: booking.scheduleDate,
+                time: `${booking.startTime.slice(0, 5)} - ${booking.endTime.slice(0, 5)}`,
+                totalAmount,
+                platformFee,
+                consultantReceives,
+                currencySymbol,
+                year: new Date().getFullYear(),
+            },
+            sendAsync: true,
+        });
+
+        console.log(`🟢 Email sent to consultant: ${booking.consultant.email}`);
         console.log(`🟢 Consultant payout marked as TRANSFER_SENT for transferId: ${transfer.id}`);
         console.log("================================================================\n");
 
         this.logger.log(`Consultant transfer initiated: ${transfer.amount}`);
     }
-
 
 
     async handlePayoutPaid(event: Stripe.Event) {
