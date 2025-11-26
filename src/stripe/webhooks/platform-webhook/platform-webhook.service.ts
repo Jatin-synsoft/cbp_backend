@@ -39,8 +39,9 @@ export class PlatformWebhookService {
         }
 
         const booking = await Booking.findByPk(transaction.bookingId, {
-            include: ['customer', 'consultant', 'currency'],
+            include: ['customer', 'consultant', 'currency', 'consultantPayout'],
         });
+        console.log(`🚀 ~ :44 ~ booking:-->`, booking)
 
         if (!booking) return;
 
