@@ -29,6 +29,7 @@ export class ConsultantRatingController {
     return this.ratingService.createRating(user.id, dto);
   }
 
+  @Roles(2, 3)
   @Get(':bookingId')
   @ApiOperation({ summary: 'Get rating details by booking ID' })
   async getRatingByBookingId(@Param('bookingId', ParseIntPipe) bookingId: number,) {

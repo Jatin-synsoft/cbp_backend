@@ -18,6 +18,7 @@ import { SpecialtiesMst } from 'src/database/models/specialtiesMst.model';
 import { Currency } from 'src/database/models/currencies.model';
 import { StripeService } from 'src/stripe/stripe.service';
 import { MailService } from '../mail/mail-sendgrid.service';
+import { url } from 'inspector';
 
 @Injectable()
 export class AuthService {
@@ -100,6 +101,7 @@ export class AuthService {
         email: user.email,
         phone: user.phone,
         role: dto.role.toLowerCase(),
+        url: `${process.env.FRONTEND_URL}/admin/user-detail/${user.id}`
       },
       sendAsync: true,
     });
@@ -365,6 +367,7 @@ export class AuthService {
             email: user.email,
             phone: user.phone,
             role: user.roles[0].name.toLowerCase(),
+            url: `${process.env.FRONTEND_URL}/admin/user-detail/${user.id}`
           },
           sendAsync: true,
         });

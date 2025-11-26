@@ -59,8 +59,8 @@ export class BookingsService {
         templateName: 'meeting-link.html',
         context: {
           fullName: booking.customer.fullName,
-          bookingDate: booking.bookingDate,
-          startTime: booking.startTime,
+          scheduleDate: booking.scheduleDate,
+          slot: `${booking.startTime.slice(0, 5)} - ${booking.endTime.slice(0, 5)}`,
           meetingLink: booking.meetingLink,
           messageText,
           year: new Date().getFullYear(),

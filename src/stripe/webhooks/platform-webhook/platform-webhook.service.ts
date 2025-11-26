@@ -5,6 +5,7 @@ import { BookingTransaction } from 'src/database/models/bookingTransaction.model
 import { BookingStatus, BookingTransactionStatus } from 'src/common/enums/booking-status.enum';
 import { ConsultantPayout } from 'src/database/models/consultantPayout.model';
 import { MailService } from 'src/modules/mail/mail-sendgrid.service';
+import { Currency } from 'src/database/models/currencies.model';
 @Injectable()
 export class PlatformWebhookService {
 
@@ -22,7 +23,14 @@ export class PlatformWebhookService {
 
         const transaction = await BookingTransaction.findOne({
             where: { paymentIntentId: pi.id },
-            include: [Booking],
+            include: [{
+                model: Booking,
+                include: ['customer', 'consultant', 'currency', 'consultantPayout'],
+            },
+            {
+                model: Currency,
+                attributes: ['code', 'symbol'],
+            }],
         });
 
         if (!transaction) {
@@ -55,7 +63,9 @@ export class PlatformWebhookService {
                 userFullName: booking.customer.fullName,
                 scheduleDate: booking.scheduleDate,
                 time: `${booking.startTime.slice(0, 5)} - ${booking.endTime.slice(0, 5)}`,
-                amount: transaction.amount,
+                receivedAmount: `${booking.currency.symbol} ${booking.consultantPayout?.amount ?? 0}`,
+                platformFee: `${booking.currency.symbol} ${booking.consultantPayout?.platformFee ?? 0}`,
+                totalAmount: `${booking.currency.symbol} ${transaction.amount}`,
                 year: new Date().getFullYear(),
             },
             sendAsync: true,

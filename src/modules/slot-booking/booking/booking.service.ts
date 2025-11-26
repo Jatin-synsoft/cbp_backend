@@ -20,6 +20,7 @@ import { Profile } from 'src/database/models/profile.model';
 import { Currency } from 'src/database/models/currencies.model';
 import { BookingTransaction } from 'src/database/models/bookingTransaction.model';
 import { StripeAccountStatus } from 'src/common/enums/account-status.enum';
+import { ConsultantPayout } from 'src/database/models/consultantPayout.model';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -32,6 +33,7 @@ export class BookingService {
     @InjectModel(Profile) private profileModel: typeof Profile,
     @InjectModel(Currency) private currencyModel: typeof Currency,
     @InjectModel(BookingTransaction) private bookingTransactionModel: typeof BookingTransaction,
+    @InjectModel(ConsultantPayout) private payoutModel: typeof ConsultantPayout,
     private rruleService: RruleService,
     private sequelize: Sequelize,
     private stripeService: StripeService,
@@ -321,6 +323,25 @@ export class BookingService {
         as: 'customer',
         attributes: ['id', 'fullName', 'email', 'phone'],
       });
+      include.push({
+        model: this.payoutModel,
+        as: "consultantPayout",
+        attributes: [
+          "id",
+          "amount",
+          "platformFee",
+          "status",
+          "createdAt"
+        ],
+        include: [
+          {
+            model: this.currencyModel,
+            as: "currency",
+            attributes: ["id", "code", "symbol"]
+          }
+        ]
+      });
+
     } else if (roles.includes(3)) {
       where.customerId = userId;
 

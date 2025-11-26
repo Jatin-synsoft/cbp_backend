@@ -77,10 +77,13 @@
 
 <body>
     <div class="container">
+
+        <!-- Header -->
         <div class="header">
             <h2>New Booking Received!</h2>
         </div>
 
+        <!-- Main Content -->
         <div class="content">
             <p>Hi {{consultantName}},</p>
             <p>
@@ -90,24 +93,69 @@
 
             <p>Here are the booking details:</p>
 
+            <!-- Basic Details -->
             <div class="details">
                 <p><strong>Booked By:</strong> {{userFullName}}</p>
                 <p><strong>Schedule Date:</strong> {{scheduleDate}}</p>
                 <p><strong>Schedule Time:</strong> {{time}}</p>
-                <p><strong>Amount Paid:</strong> ${{amount}}</p>
+            </div>
+
+            <!-- Invoice Section -->
+            <div style="
+                margin: 25px auto;
+                max-width: 420px;
+                background: #ffffff;
+                border: 1px solid #e6e6e6;
+                border-radius: 8px;
+                padding: 20px;
+                font-size: 13px;
+                color: #333;
+            ">
+                <h3 style="margin: 0 0 15px 0; font-size: 15px; color: #1b75bc; text-align:center;">
+                    Invoice Summary
+                </h3>
+
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 6px 0;">Total Amount</td>
+                        <td style="padding: 6px 0; text-align: right;"><strong>{{totalAmount}}</strong></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 0;">Platform Fee</td>
+                        <td style="padding: 6px 0; text-align: right;"><strong>{{platformFee}}</strong></td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="2">
+                            <hr style="border: none; border-top: 1px solid #ddd; margin: 10px 0;" />
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: 600; font-size: 14px;">Received Amount</td>
+                        <td style="padding: 8px 0; text-align: right; font-weight: 600; font-size: 14px;">
+                            {{receivedAmount}}
+                        </td>
+                    </tr>
+                </table>
             </div>
 
             <p>
-                Please check your consultant portal for meeting link, user details
+                Please check your consultant portal for the meeting link, user details,
                 and full booking information.
             </p>
 
-            <p>Best regards,<br />The Boardtide Team</p>
+            <p>
+                Best regards,<br />
+                The Boardtide Team
+            </p>
         </div>
 
+        <!-- Footer -->
         <div class="footer">
             © {{year}} Boardtide. All rights reserved.
         </div>
+
     </div>
 </body>
 

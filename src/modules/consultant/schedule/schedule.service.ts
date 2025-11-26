@@ -68,7 +68,7 @@ export class ScheduleService {
         const overlapEnd = existingEnd.tz('Asia/Kolkata').format('DD MMM YYYY');
 
         throw new BadRequestException({
-          message: `⚠️ Schedule overlap detected: You already have a schedule between ${overlapStart} and ${overlapEnd}. Please adjust your dates.`,
+          message: `Schedule overlap detected: You already have a schedule between ${overlapStart} and ${overlapEnd}. Please adjust your dates.`,
           existingScheduleId: existing.id,
         });
       }
@@ -76,7 +76,7 @@ export class ScheduleService {
 
     // ✅ No overlap → Create schedule
     await this.scheduleModel.create({ ...dto, userId });
-    return { message: '✅ Consultant schedule created successfully' };
+    return { message: 'Consultant schedule created successfully' };
   }
 
   async updateSchedule(scheduleId: number, dto: ScheduleDto, userId: number) {

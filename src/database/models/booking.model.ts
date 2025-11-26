@@ -7,10 +7,12 @@ import {
   AutoIncrement,
   ForeignKey,
   BelongsTo,
+  HasOne,
 } from "sequelize-typescript";
 import { User } from "./user.model";
 import { Currency } from "./currencies.model";
 import { BookingStatus } from "../../common/enums/booking-status.enum";
+import { ConsultantPayout } from "./consultantPayout.model";
 
 @Table({ tableName: "bookings", timestamps: true, })
 export class Booking extends Model<Booking> {
@@ -101,5 +103,8 @@ export class Booking extends Model<Booking> {
 
   @BelongsTo(() => Currency)
   currency: Currency;
+
+  @HasOne(() => ConsultantPayout, "bookingId")
+  consultantPayout: ConsultantPayout;
 }
 
