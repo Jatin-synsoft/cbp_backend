@@ -136,12 +136,17 @@ export class PlatformWebhookService {
     async handleTransferCreated(event: Stripe.Event) {
         const transfer = event.data.object as Stripe.Transfer;
 
+        const chargeId =
+            typeof transfer.source_transaction === "string"
+                ? transfer.source_transaction
+                : transfer.source_transaction?.id;
+
         console.log("\n================= 🔵 TRANSFER.CREATED RECEIVED =================");
         console.log("Raw Transfer object =>", transfer);
 
         // 1️⃣ Fetch payout entry using transfer ID
         const payout = await ConsultantPayout.findOne({
-            where: { stripeTransferId: transfer.id },
+            where: { stripeTransferId: chargeId },
             include: [
                 {
                     model: Booking,
