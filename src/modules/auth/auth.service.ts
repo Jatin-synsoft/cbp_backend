@@ -262,7 +262,8 @@ export class AuthService {
             'references',
             'hourlyRate',
             'stripeAccountId',
-            'stripeAccountStatus'
+            'stripeAccountStatus',
+            'timeZone',
           ],
           include: [
             {

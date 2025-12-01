@@ -27,182 +27,61 @@ export class RruleService {
     try {
       if (!schedule?.rrule) return [];
 
+      const scheduleTZ = schedule.timezone || "UTC";
+
       const dtstart = extractDtstartFromRrule(schedule.rrule);
       if (isNaN(dtstart.getTime())) return [];
 
-      // 🧹 Clean RRULE string
       const cleanedRule = schedule.rrule
         .replace("COUNT=0", "")
         .replace("INTERVAL=0", "INTERVAL=1")
         .replace(/;;+/g, ";")
         .split("\n")
         .filter((line) => !line.startsWith("DTSTART"))
-        .filter((line) => line.trim() && !line.includes("undefined"))
         .join("\n");
 
-      const ruleSet = rrulestr(cleanedRule, { dtstart, forceset: true });
+      const ruleSet = rrulestr(cleanedRule, {
+        dtstart,
+        tzid: scheduleTZ,  // 👈 IMPORTANT
+        forceset: true,
+      });
 
-      const start = new Date(dto.startDate);
-      start.setHours(0, 0, 0, 0); // start of the day
+      const startLocal = dayjs.tz(dto.startDate, scheduleTZ).startOf("day").toDate();
+      const endLocal = dayjs.tz(dto.endDate, scheduleTZ).endOf("day").toDate();
 
-      const end = new Date(dto.endDate);
-      end.setHours(23, 59, 59, 999); // end of the day
-
-      if (isNaN(start.getTime()) || isNaN(end.getTime())) return [];
-
-      // 🕒 Get all recurring occurrences
-      const effectiveStart = new Date(
-        Math.max(dtstart.getTime(), new Date(dto.startDate).getTime())
-      );
-
-      const occurrences = ruleSet.between(effectiveStart, end, true);
+      const occurrences = ruleSet.between(startLocal, endLocal, true);
       if (!occurrences.length) return [];
 
-      // ✅ Extract BYHOUR safely
-      let byHours: number[] = [];
+      const hours = (ruleSet as any)._rrule?.[0]?.options?.byhour || [];
 
-      if (ruleSet instanceof RRuleSet && (ruleSet as any)._rrule?.length) {
-        const firstRule = (ruleSet as any)._rrule[0];
-        if (firstRule?.options && Array.isArray(firstRule.options.byhour)) {
-          byHours = firstRule.options.byhour;
-        }
-      }
-
-      // Default values if not in RRULE
-      if (!byHours.length) byHours = [occurrences[0]?.getUTCHours() ?? 0];
-
-      // 🔁 Generate slots
       const slots: { start: string; end: string }[] = [];
 
       for (const occ of occurrences) {
+        for (const hour of hours) {
+          const start = dayjs(occ)
+            .tz(scheduleTZ)
+            .hour(hour)
+            .minute(0)
+            .second(0);
 
-        for (const hour of byHours) {
-          // ✅ Force minutes and seconds to 00 always
-          const slotStart = new Date(
-            Date.UTC(
-              occ.getUTCFullYear(),
-              occ.getUTCMonth(),
-              occ.getUTCDate(),
-              hour,
-              0, // minutes = 00
-              0 // seconds = 00
-            )
-          );
+          const end = start.add(1, "hour");
 
-          const slotEnd = new Date(slotStart);
-          slotEnd.setUTCHours(slotStart.getUTCHours() + 1);
-
+          // Convert back to UTC
           slots.push({
-            start: slotStart.toISOString(),
-            end: slotEnd.toISOString(),
+            start: start.utc().toISOString(),
+            end: end.utc().toISOString(),
           });
         }
       }
 
-      // 🧠 Remove duplicates
-      const uniqueSlots = Array.from(
-        new Map(slots.map((s) => [s.start + s.end, s])).values()
+      return Array.from(
+        new Map(slots.map((s) => [`${s.start}-${s.end}`, s])).values()
       );
-
-      return uniqueSlots;
     } catch (err) {
-      this.logger?.error?.(
-        `Error generating slots for schedule ${schedule?.scheduleId}: ${err.message}`
-      );
+      this.logger.error(`RRULE generation error: ${err.message}`);
       return [];
     }
   }
-
-  // async generateRecurringDatesFunc(
-  //   schedule: any,
-  //   dto: { startDate: string; endDate: string }
-  // ) {
-  //   try {
-  //     if (!schedule?.rrule) return [];
-
-  //     const dtstart = extractDtstartFromRrule(schedule.rrule);
-  //     if (isNaN(dtstart.getTime())) return [];
-
-  //     // 🧹 Clean RRULE string
-  //     const cleanedRule = schedule.rrule
-  //       .replace('COUNT=0', '')
-  //       .replace('INTERVAL=0', 'INTERVAL=1')
-  //       .replace(/;;+/g, ';')
-  //       .split('\n')
-  //       .filter((line) => !line.startsWith('DTSTART'))
-  //       .filter((line) => line.trim() && !line.includes('undefined'))
-  //       .join('\n');
-
-  //     const ruleSet = rrulestr(cleanedRule, { dtstart, forceset: true });
-
-  //     const start = new Date(dto.startDate);
-  //     start.setHours(0, 0, 0, 0);
-  //     const end = new Date(dto.endDate);
-  //     end.setHours(23, 59, 59, 999);
-
-  //     if (isNaN(start.getTime()) || isNaN(end.getTime())) return [];
-
-  //     // 🕒 Generate occurrences
-  //     const occurrences = ruleSet.between(start, end, true);
-  //     if (!occurrences.length) return [];
-
-  //     // ✅ Extract BYHOUR safely
-  //     let byHours: number[] = [];
-
-  //     if (ruleSet instanceof RRuleSet && (ruleSet as any)._rrule?.length) {
-  //       const firstRule = (ruleSet as any)._rrule[0];
-  //       if (firstRule?.options && Array.isArray(firstRule.options.byhour)) {
-  //         byHours = firstRule.options.byhour;
-  //       }
-  //     }
-
-  //     if (!byHours.length) byHours = [occurrences[0]?.getUTCHours() ?? 0];
-
-  //     // 🔁 Generate slots
-  //     const slots: { start: string; end: string }[] = [];
-
-  //     for (const occ of occurrences) {
-  //       for (const hour of byHours) {
-  //         const slotStart = new Date(
-  //           Date.UTC(
-  //             occ.getUTCFullYear(),
-  //             occ.getUTCMonth(),
-  //             occ.getUTCDate(),
-  //             hour,
-  //             0,
-  //             0
-  //           )
-  //         );
-
-  //         const slotEnd = new Date(slotStart);
-  //         slotEnd.setUTCHours(slotStart.getUTCHours() + 1);
-
-  //         slots.push({
-  //           start: slotStart.toISOString(),
-  //           end: slotEnd.toISOString(),
-  //         });
-  //       }
-  //     }
-
-  //     // 🧠 Remove duplicates
-  //     const uniqueSlots = Array.from(
-  //       new Map(slots.map((s) => [s.start + s.end, s])).values()
-  //     );
-
-  //     // 🌏 Convert to IST before returning
-  //     const istSlots = uniqueSlots.map((s) => ({
-  //       start: dayjs.utc(s.start).tz('Asia/Kolkata').format(),
-  //       end: dayjs.utc(s.end).tz('Asia/Kolkata').format(),
-  //     }));
-
-  //     return istSlots;
-  //   } catch (err) {
-  //     this.logger.error(
-  //       `Error generating slots for schedule ${schedule?.scheduleId}: ${err.message}`
-  //     );
-  //     return [];
-  //   }
-  // }
 
 
   async getRruleAvailability(

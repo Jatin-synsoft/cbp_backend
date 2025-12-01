@@ -78,7 +78,7 @@ export class BookingService {
 
       const bookingAmount = amount * 100;
 
-      const tz = "UTC";
+      const tz = consultant.profile.timeZone || "UTC";
       const slotStart = dayjs.tz(`${scheduleDate} ${startTime}`, "YYYY-MM-DD HH:mm", tz);
       const slotEnd = dayjs.tz(`${scheduleDate} ${endTime}`, "YYYY-MM-DD HH:mm", tz);
 
