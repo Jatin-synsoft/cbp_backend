@@ -13,6 +13,7 @@ import { User } from "./user.model";
 import { Currency } from "./currencies.model";
 import { BookingStatus } from "../../common/enums/booking-status.enum";
 import { ConsultantPayout } from "./consultantPayout.model";
+import { ConsultantRating } from "./consultantRating.model";
 
 @Table({ tableName: "bookings", timestamps: true, })
 export class Booking extends Model<Booking> {
@@ -106,5 +107,8 @@ export class Booking extends Model<Booking> {
 
   @HasOne(() => ConsultantPayout, "bookingId")
   consultantPayout: ConsultantPayout;
+
+  @HasOne(() => ConsultantRating, "bookingId")
+  rating: ConsultantRating;
 }
 

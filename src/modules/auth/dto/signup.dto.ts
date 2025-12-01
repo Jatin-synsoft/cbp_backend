@@ -58,6 +58,9 @@ export class SignupDto {
     @IsOptional()
     expertise?: string;
 
+    @ApiProperty({ example: 'Asia/Kolkata' })
+    timeZone?: string;
+
     @ApiProperty({ example: 'John Doe' })
     @IsOptional()
     references?: { name: string; contact: string; designation: string }[];

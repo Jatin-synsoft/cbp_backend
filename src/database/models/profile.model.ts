@@ -16,6 +16,9 @@ export class Profile extends Model {
     userId: number;
 
     @Column({ type: DataType.STRING, allowNull: true })
+    timeZone: string;
+
+    @Column({ type: DataType.STRING, allowNull: true })
     street: string;
 
     @Column({ type: DataType.STRING, allowNull: true })

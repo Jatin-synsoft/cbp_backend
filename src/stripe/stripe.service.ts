@@ -59,26 +59,29 @@ export class StripeService {
 
   async createSplitPaymentIntent(consultantAccountId: string, amount: number, currencyCode: string) {
 
-    const consultantStripeAccount = await this.stripe.accounts.retrieve(consultantAccountId);
-    if (!consultantStripeAccount) throw new BadRequestException('Consultant not found');
-
     const adminFee = this.calculateAdminFee(amount);
+
     const intent = await this.stripe.paymentIntents.create({
-      amount: amount,
+      amount,
       currency: currencyCode,
-      payment_method_types: ['card'],
+      automatic_payment_methods: { enabled: true },
+
+      application_fee_amount: adminFee,
 
       transfer_data: {
         destination: consultantAccountId,
-      },
-
-      application_fee_amount: adminFee,
+      }
     });
-    return { paymentIntentId: intent.id, clientSecret: intent.client_secret };
+
+    return {
+      paymentIntentId: intent.id,
+      clientSecret: intent.client_secret,
+    };
   }
+
 
   calculateAdminFee(amount: number) {
     const percent = this.config.get('ADMIN_FEE');
-    return Math.round(amount * (percent / 100));
+    return amount * (percent / 100);
   }
 }

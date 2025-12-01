@@ -32,10 +32,17 @@ export class BookingController {
 
 
   @Get('bookings')
-  @Roles(3, 2)
+  @Roles(3, 2, 1)
   @ApiOperation({ summary: 'Get all bookings for user or consultant' })
   async getBookings(@Query() query: PaginationDto, @GetUser() user: any) {
     return this.bookingService.findAllBookings(user, query);
+  }
+
+  @Get(':id')
+  @Roles(1, 2, 3)
+  @ApiOperation({ summary: 'Get booking by ID (role-based access)' })
+  async getBookingById(@Param('id') id: number, @GetUser() user: any,) {
+    return this.bookingService.findBookingById(user, id);
   }
 
 }

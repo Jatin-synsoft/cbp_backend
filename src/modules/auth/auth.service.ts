@@ -74,6 +74,7 @@ export class AuthService {
       zipcode: dto.zipcode,
       qualification: dto.qualification,
       expertise: dto.expertise,
+      timeZone: dto.timeZone
     });
 
     if (dto.role === 'CONSULTANT') {

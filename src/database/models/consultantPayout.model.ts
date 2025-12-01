@@ -1,4 +1,3 @@
-
 import {
     Table,
     Column,
@@ -12,6 +11,7 @@ import {
 import { Booking } from "./booking.model";
 import { Currency } from "./currencies.model";
 import { User } from "./user.model";
+import { PayoutStatus } from "src/common/enums/booking-status.enum";
 
 @Table({ tableName: "consultant_payouts", timestamps: true })
 export class ConsultantPayout extends Model<ConsultantPayout> {
@@ -41,8 +41,12 @@ export class ConsultantPayout extends Model<ConsultantPayout> {
     @Column(DataType.STRING)
     stripeTransferId: string;
 
-    @Column(DataType.STRING)
-    status: string;
+    @Column({
+        type: DataType.ENUM(...Object.values(PayoutStatus)),
+        allowNull: false,
+        defaultValue: PayoutStatus.PENDING,
+    })
+    status: PayoutStatus;
 
     @BelongsTo(() => Booking)
     booking: Booking;

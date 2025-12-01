@@ -14,6 +14,7 @@ import { Booking } from './models/booking.model';
 import { ConsultantPayout } from './models/consultantPayout.model';
 import { BookingTransaction } from './models/bookingTransaction.model';
 import { ConsultantRating } from './models/consultantRating.model';
+import { Enquiry } from './models/enquiry.model';
 
 @Module({
   imports: [
@@ -48,7 +49,8 @@ import { ConsultantRating } from './models/consultantRating.model';
           Booking,
           BookingTransaction,
           ConsultantPayout,
-          ConsultantRating
+          ConsultantRating,
+          Enquiry
         ],
       }),
     }),
@@ -65,7 +67,8 @@ import { ConsultantRating } from './models/consultantRating.model';
       Booking,
       BookingTransaction,
       ConsultantPayout,
-      ConsultantRating
+      ConsultantRating,
+      Enquiry
     ]),
   ],
   exports: [SequelizeModule], // Export so other modules can use @InjectModel

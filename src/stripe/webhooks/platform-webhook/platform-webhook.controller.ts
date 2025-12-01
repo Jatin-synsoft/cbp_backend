@@ -25,9 +25,6 @@ export class PlatformWebhookController {
   ) {
     let event: Stripe.Event;
 
-    // ------------------------------
-    // 1️⃣ VERIFY WEBHOOK SIGNATURE
-    // ------------------------------
     try {
       event = this.stripe.webhooks.constructEvent(
         req.body,
@@ -39,9 +36,6 @@ export class PlatformWebhookController {
       return res.status(400).send(`Webhook Error: ${e.message}`);
     }
 
-    // ------------------------------
-    // 2️⃣ ROUTE EVENT → SERVICE
-    // ------------------------------
     try {
       switch (event.type) {
         case 'payment_intent.succeeded':
@@ -56,8 +50,12 @@ export class PlatformWebhookController {
           await this.platformWebhookService.handleTransferCreated(event);
           break;
 
-        case 'payout.paid':
-          await this.platformWebhookService.handlePayoutPaid(event);
+        case "payment_intent.payment_failed":
+          await this.platformWebhookService.handlePaymentFailed(event);
+          break;
+
+        case "payment_intent.canceled":
+          await this.platformWebhookService.handlePaymentCanceled(event);
           break;
 
         default:
