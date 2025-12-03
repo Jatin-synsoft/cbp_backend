@@ -8,7 +8,7 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 @ApiBearerAuth()
 @UseGuards(JwtRolesGuard)
 @Roles(1)
-@Controller('dashboard')
+@Controller('dashboard/admin')
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) { }
 
@@ -22,5 +22,35 @@ export class DashboardController {
   @ApiOperation({ summary: 'Get last 20 registered users' })
   getRecentUsers() {
     return this.dashboardService.getLastUsers();
+  }
+
+  @Get('overview')
+  @ApiOperation({ summary: 'Admin Overview stats' })
+  async overview() {
+    return this.dashboardService.getOverview();
+  }
+
+  @Get('recent-bookings')
+  @ApiOperation({ summary: 'Recent bookings list for admin' })
+  async recentBookings() {
+    return this.dashboardService.getRecentBookings();
+  }
+
+  @Get('recent-users')
+  @ApiOperation({ summary: 'Recent 5 registered users' })
+  async recentUsers() {
+    return this.dashboardService.getRecentUsers();
+  }
+
+  @Get('earnings-summary')
+  @ApiOperation({ summary: 'Platform earnings summary (weekly/monthly)' })
+  async earningsSummary() {
+    return this.dashboardService.getEarningsSummary();
+  }
+
+  @Get('top-consultants')
+  @ApiOperation({ summary: 'Top consultants by revenue' })
+  async topConsultants() {
+    return this.dashboardService.getTopConsultants();
   }
 }

@@ -42,14 +42,7 @@ export class ScheduleService {
   ) { }
 
   async createSchedule(dto: ScheduleDto, userId: number) {
-    const consultant = await this.userModel.findByPk(userId, {
-      include: [
-        {
-          model: Profile,
-          as: 'profile',
-        },
-      ],
-    });
+    const consultant = await this.userModel.findByPk(userId);
     if (!consultant) throw new NotFoundException('Consultant not found');
 
     // 🆕 Parse new schedule start and end dates
@@ -71,8 +64,8 @@ export class ScheduleService {
         newEnd.isAfter(existingStart.subtract(1, 'day'));
 
       if (isOverlap) {
-        const overlapStart = existingStart.tz(consultant.profile.timeZone).format('DD MMM YYYY');
-        const overlapEnd = existingEnd.tz(consultant.profile.timeZone).format('DD MMM YYYY');
+        const overlapStart = existingStart.tz('Asia/Kolkata').format('DD MMM YYYY');
+        const overlapEnd = existingEnd.tz('Asia/Kolkata').format('DD MMM YYYY');
 
         throw new BadRequestException({
           message: `Schedule overlap detected: You already have a schedule between ${overlapStart} and ${overlapEnd}. Please adjust your dates.`,
@@ -124,7 +117,7 @@ export class ScheduleService {
     // 2. Generate slots per schedule (using your helper)
     for (const schedule of schedules) {
       const slots = await this.rruleService.generateRecurringDatesFunc(
-        { schedule, timezone: userTZ },
+        schedule,
         { startDate, endDate }
       );
 
@@ -162,10 +155,7 @@ export class ScheduleService {
     generatedAvailability.forEach(({ date, slots }) => {
 
       slots.forEach((slot) => {
-        const slotStartUserTZ = dayjs.utc(slot.start).tz(userTZ);
-        const slotEndUserTZ = dayjs.utc(slot.end).tz(userTZ);
-
-        const isExpired = slotEndUserTZ.isBefore(dayjs().tz(userTZ));
+        const isExpired = dayjs.tz(slot.end, userTZ).isBefore(dayjs().tz(userTZ));
         const isBooked = bookedSlots.some(
           (b) =>
             dayjs(b.start).isSame(slot.start) && dayjs(b.end).isSame(slot.end)
@@ -174,8 +164,8 @@ export class ScheduleService {
         // const isPast = dayjs(slot.start).isBefore(dayjs());
         const isAvailable = !isBooked && !isExpired;
 
-        const startTime = formatTime(slot.start);
-        const endTime = formatTime(slot.end);
+        const startTime = formatTime(slot.start, userTZ);
+        const endTime = formatTime(slot.end, userTZ);
 
         const startDate = dayjs(
           `${date} ${startTime}`,
@@ -215,18 +205,28 @@ export class ScheduleService {
             : isExpired
               ? "expired"
               : "available",
-          slot: `${slotStartUserTZ.format()} - ${slotEndUserTZ.format()}`,
-          start: slotStartUserTZ.toISOString(),
-          end: slotEndUserTZ.toISOString(),
-          timeSlot: `${slotStartUserTZ.format("HH:mm")}-${slotEndUserTZ.format("HH:mm")}`,
-          isAvailable: !isExpired && !isBooked,
+          slot: `${slot.start} - ${slot.end}`,
+          start: slot.start,
+          end: slot.end,
+
+          timeSlot,
+          isAvailable,
           backgroundColor: isBooked
             ? "#FCA5A5"
             : isExpired
               ? "#E5E7EB"
               : "#A7F3D0",
+          borderColor: isBooked
+            ? "#DC2626"
+            : isExpired
+              ? "#9CA3AF"
+              : "#34D399",
+          textColor: isBooked
+            ? "#7F1D1D"
+            : isExpired
+              ? "#6B7280"
+              : "#064E3B",
         });
-
 
 
       });
@@ -242,7 +242,98 @@ export class ScheduleService {
       availability: array,
     };
   }
+  // async getConsultantAvailability(userId: number, query: GetAvailabilityDto) {
+  //   const { startDate, endDate } = query;
 
+  //   // 1. Fetch schedules
+  //   const schedules = await this.scheduleModel.findAll({ where: { userId } });
+
+  //   let generatedAvailability: {
+  //     date: string;
+  //     slots: { start: string; end: string }[];
+  //   }[] = [];
+
+  //   // 2. Generate slots per schedule (already returns IST times)
+  //   for (const schedule of schedules) {
+  //     const slots = await this.rruleService.generateRecurringDatesFunc(schedule, {
+  //       startDate,
+  //       endDate,
+  //     });
+
+  //     for (const slot of slots) {
+  //       const date = dayjs(slot.start).format('YYYY-MM-DD');
+
+  //       let daySlot = generatedAvailability.find((d) => d.date === date);
+  //       if (!daySlot) {
+  //         daySlot = { date, slots: [] };
+  //         generatedAvailability.push(daySlot);
+  //       }
+
+  //       daySlot.slots.push(slot);
+  //     }
+  //   }
+
+  //   // 3. Fetch existing bookings (convert to IST)
+  //   const existingBookings = await this.bookingModel.findAll({
+  //     where: {
+  //       consultantId: userId,
+  //       scheduleDate: { [Op.between]: [startDate, endDate] },
+  //     },
+  //   });
+
+  //   const bookedSlots = existingBookings.map((b) => ({
+  //     start: dayjs.tz(`${b.scheduleDate}T${b.startTime}`, 'Asia/Kolkata').format(),
+  //     end: dayjs.tz(`${b.scheduleDate}T${b.endTime}`, 'Asia/Kolkata').format(),
+  //   }));
+
+  //   const array: any[] = [];
+
+  //   generatedAvailability.forEach(({ date, slots }) => {
+  //     slots.forEach((slot) => {
+  //       const isBooked = bookedSlots.some(
+  //         (b) => dayjs(b.start).isSame(slot.start) && dayjs(b.end).isSame(slot.end)
+  //       );
+
+  //       const isPast = dayjs(slot.start).isBefore(dayjs());
+  //       const isAvailable = !isBooked && !isPast;
+
+  //       const startTime = formatTime(slot.start);
+  //       const endTime = formatTime(slot.end);
+
+  //       const startIso = dayjs(`${date} ${startTime}`, 'YYYY-MM-DD hh:mm A')
+  //         .tz('Asia/Kolkata')
+  //         .format();
+  //       const endIso = dayjs(`${date} ${endTime}`, 'YYYY-MM-DD hh:mm A')
+  //         .tz('Asia/Kolkata')
+  //         .format();
+
+  //       const timeSlot = `${dayjs(slot.start).format('HH:mm')}-${dayjs(
+  //         slot.end
+  //       ).format('HH:mm')}`;
+
+  //       array.push({
+  //         id: `avail-${date}-${slot.start}`,
+  //         title: isAvailable ? 'Slot Available' : 'Booked Slot',
+  //         type: isAvailable ? 'available' : 'booked',
+  //         slot: `${slot.start} - ${slot.end}`,
+  //         start: startIso,
+  //         end: endIso,
+  //         timeSlot,
+  //         isAvailable,
+  //         backgroundColor: isAvailable ? '#A7F3D0' : '#FCA5A5',
+  //         borderColor: isAvailable ? '#34D399' : '#DC2626',
+  //         textColor: isAvailable ? '#064E3B' : '#7F1D1D',
+  //       });
+  //     });
+  //   });
+
+  //   return {
+  //     userId,
+  //     startDate,
+  //     endDate,
+  //     availability: array,
+  //   };
+  // }
   async getSchedules(userId: number) {
     try {
       const schedules = await this.scheduleModel.findAll({

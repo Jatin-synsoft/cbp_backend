@@ -6,6 +6,7 @@ import { ConsultantDocument } from './consultantDocuments.model';
 import { ConsultantSpecialty } from './consultantSpecialties.model';
 import { UserStatus } from '../../common/enums/user-status.enum';
 import { ConsultantRating } from './consultantRating.model';
+import { ConsultantPayout } from './consultantPayout.model';
 
 @Table({
     tableName: 'users',
@@ -53,6 +54,10 @@ export class User extends Model {
 
     @HasMany(() => ConsultantRating, { foreignKey: 'userId', as: 'givenRatings' })
     givenRatings: ConsultantRating[];
+
+    @HasMany(() => ConsultantPayout, { foreignKey: 'consultantId' })
+    payouts: ConsultantPayout[];
+
 
 }
 
