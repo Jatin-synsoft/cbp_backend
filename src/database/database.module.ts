@@ -25,9 +25,9 @@ import { Enquiry } from './models/enquiry.model';
       useFactory: (configService: ConfigService) => ({
         dialect: "mysql",
         host: configService.get<string>("DATABASE_HOST"),
-        port: parseInt(configService.get<string>("DATABASE_PORT")),
+        port: +configService.get<number>("DATABASE_PORT"),
         username: configService.get<string>("DATABASE_USERNAME"),
-        password: configService.get<string>("DATABASE_PASSWORD") || '',
+        password: configService.get<string>("DATABASE_PASSWORD"),
         database: configService.get<string>("DATABASE_NAME"),
         autoLoadModels: true,
         // synchronize: true,
@@ -36,6 +36,17 @@ import { Enquiry } from './models/enquiry.model';
         //   charset: "utf8mb4",
         //   collate: "utf8mb4_unicode_ci",   
         // },
+        pool: {
+          max: 20,       // increase from default 5 → 20
+          min: 2,
+          acquire: 30000, // wait 30 seconds instead of 10
+          idle: 10000,
+        },
+
+        // To avoid dead connections
+        dialectOptions: {
+          connectTimeout: 10000,
+        },
         models: [
           User,
           Profile,

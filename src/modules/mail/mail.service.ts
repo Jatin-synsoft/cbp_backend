@@ -46,20 +46,54 @@ export class MailService {
         }
     }
 
-    private getTemplate(templateName: string, variables: Record<string, string>): string {
-        const templatePath = path.join(__dirname, 'templates', templateName);
+    // private getTemplate(templateName: string, variables: Record<string, string>): string {
+    //     const templatePath = path.join(__dirname, 'templates', templateName);
 
-        // ✅ Optional caching for performance
-        let html = this.templateCache.get(templatePath);
-        if (!html) {
-            html = fs.readFileSync(templatePath, 'utf8');
-            this.templateCache.set(templatePath, html);
+    //     // ✅ Optional caching for performance
+    //     let html = this.templateCache.get(templatePath);
+    //     if (!html) {
+    //         html = fs.readFileSync(templatePath, 'utf8');
+    //         this.templateCache.set(templatePath, html);
+    //     }
+
+    //     for (const key in variables) {
+    //         html = html.replace(new RegExp(`{{${key}}}`, 'g'), variables[key]);
+    //     }
+    //     return html;
+    // }
+    private getTemplate(templateName: string, variables: Record<string, any>): string {
+        const templatesDir = path.join(__dirname, 'templates');
+
+        // Load layout.html
+        const layoutPath = path.join(templatesDir, 'layout.html');
+        let layoutHtml = this.templateCache.get(layoutPath);
+        if (!layoutHtml) {
+            layoutHtml = fs.readFileSync(layoutPath, 'utf8');
+            this.templateCache.set(layoutPath, layoutHtml);
         }
 
+        // Load body template
+        const bodyPath = path.join(templatesDir, templateName);
+        let bodyHtml = this.templateCache.get(bodyPath);
+        if (!bodyHtml) {
+            bodyHtml = fs.readFileSync(bodyPath, 'utf8');
+            this.templateCache.set(bodyPath, bodyHtml);
+        }
+
+        // Replace variables in body
         for (const key in variables) {
-            html = html.replace(new RegExp(`{{${key}}}`, 'g'), variables[key]);
+            bodyHtml = bodyHtml.replace(new RegExp(`{{${key}}}`, 'g'), variables[key]);
         }
-        return html;
+
+        // Inject body into layout
+        let finalHtml = layoutHtml.replace('{{content}}', bodyHtml);
+
+        // Replace variables inside layout (like year, subject, etc.)
+        for (const key in variables) {
+            finalHtml = finalHtml.replace(new RegExp(`{{${key}}}`, 'g'), variables[key]);
+        }
+
+        return finalHtml;
     }
 
     async sendMailTemplate({ to, templateName, context = {}, sendAsync = false, }: SendMailTemplate): Promise<void> {

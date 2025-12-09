@@ -33,23 +33,19 @@ export class AffindaService {
     }
   }
 
-  async parseFromStream(file: any) {
-    try {
-      const workspace = process.env.AFFINDA_WORKSPACE;
-      const documentType = process.env.AFFINDA_DOCUMENT_TYPE;
-      const document = await this.client.createDocument({
-        file: file,
-        workspace,
-        wait: 'true',
-        documentType,
-        compact: 'true',
-        // enableValidationTool: 'true'
-      });
+  async parseFromStream(file: string) {
+    const workspace = process.env.AFFINDA_WORKSPACE;
+    const documentType = process.env.AFFINDA_DOCUMENT_TYPE;
+    const document = await this.client.createDocument({
+      url: file,
+      workspace,
+      wait: 'true',
+      documentType,
+      compact: 'true',
+      // enableValidationTool: 'true'
+    });
 
-      return document.data;
-    } catch (err) {
-      console.error('Affinda error:', err);
-      throw new InternalServerErrorException('Failed to parse document from URL');
-    }
+    return document.data;
+
   }
 }

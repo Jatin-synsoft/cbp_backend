@@ -7,7 +7,7 @@ import { ConsultantPayout } from 'src/database/models/consultantPayout.model';
 
 import { BookingStatus } from 'src/common/enums/booking-status.enum';
 import { BookingTransactionStatus } from 'src/common/enums/booking-status.enum';
-import { Op } from 'sequelize';
+import { Op, Sequelize } from 'sequelize';
 
 @Injectable()
 export class DashboardService {
@@ -18,9 +18,7 @@ export class DashboardService {
     @InjectModel(ConsultantPayout) private readonly payoutModel: typeof ConsultantPayout,
   ) { }
 
-  // ---------------------------------------------
-  // 1. User Overview
-  // ---------------------------------------------
+
   async getUserOverview(userId: number) {
     try {
       const totalBookings = await this.bookingModel.count({
@@ -71,65 +69,90 @@ export class DashboardService {
   }
 
 
+  // async getSessionsSummary(userId: number) {
+  //   const bookings = await this.bookingModel.findAll({
+  //     where: { customerId: userId },
+  //     attributes: ['status']
+  //   });
+
+  //   const total = bookings.length;
+  //   const success = bookings.filter(b => b.status === BookingStatus.COMPLETED).length;
+  //   const pending = bookings.filter(b => b.status === BookingStatus.PENDING || b.status === BookingStatus.CONFIRMED).length;
+
+  //   return {
+  //     statusCode: 200,
+  //     message: 'Sessions summary fetched successfully',
+  //     data: { total, success, pending },
+  //   };
+
+  // }
+
+
   async getSessionsSummary(userId: number) {
-    try {
-      const bookings = await this.bookingModel.findAll({
-        where: { customerId: userId },
-        attributes: ['status']
-      });
+    const result = await this.bookingModel.findOne({
+      where: { customerId: userId },
+      attributes: [
+        [
+          Sequelize.fn(
+            'COALESCE',
+            Sequelize.fn('COUNT', Sequelize.col('id')),
+            0
+          ),
+          'total',
+        ],
 
-      const total = bookings.length;
-      const success = bookings.filter(b => b.status === BookingStatus.COMPLETED).length;
-      const pending = bookings.filter(b => b.status === BookingStatus.PENDING).length;
+        [
+          Sequelize.fn(
+            'COALESCE',
+            Sequelize.literal(
+              `SUM(CASE WHEN status = '${BookingStatus.COMPLETED}' THEN 1 ELSE 0 END)`
+            ),
+            0
+          ),
+          'completed',
+        ],
 
-      return {
-        statusCode: 200,
-        message: 'Sessions summary fetched successfully',
-        data: { total, success, pending },
-      };
-    } catch (err) {
-      console.error(err);
-      throw new BadRequestException('Failed to fetch sessions summary');
-    }
+        [
+          Sequelize.fn(
+            'COALESCE',
+            Sequelize.literal(
+              `SUM(CASE WHEN status = '${BookingStatus.CONFIRMED}' THEN 1 ELSE 0 END)`
+            ),
+            0
+          ),
+          'confirmed',
+        ],
+      ],
+      raw: true,
+    });
+
+    return {
+      statusCode: 200,
+      message: 'Sessions summary fetched successfully',
+      data: result,
+    };
   }
 
-  // -------------------------------
-  // 2. Upcoming & Previous Bookings
-  // -------------------------------
+
+
   async getBookingsList(userId: number) {
 
-    const today = new Date();
-
-    // Upcoming Bookings (next 3)
     const upcoming = await this.bookingModel.findAll({
       where: {
         customerId: userId,
-        bookingDate: { [Op.gte]: today },
+        status: { [Op.in]: [BookingStatus.CONFIRMED, BookingStatus.PENDING] },
       },
       include: [
         { model: this.userModel, as: 'consultant', attributes: ['id', 'fullName'] },
       ],
-      order: [['bookingDate', 'ASC'], ['startTime', 'ASC']],
-      limit: 3,
-    });
-
-    // Previous Bookings (last 3)
-    const previous = await this.bookingModel.findAll({
-      where: {
-        customerId: userId,
-        bookingDate: { [Op.lt]: today },
-      },
-      include: [
-        { model: this.userModel, as: 'consultant', attributes: ['id', 'fullName'] },
-      ],
-      order: [['bookingDate', 'DESC'], ['startTime', 'DESC']],
+      order: [['scheduleDate', 'ASC'], ['startTime', 'ASC']],
       limit: 3,
     });
 
     return {
       statusCode: 200,
       message: 'Bookings fetched successfully',
-      data: { upcoming, previous },
+      data: { upcoming }
     };
 
   }

@@ -33,7 +33,7 @@ export class BookingTransaction extends Model<BookingTransaction> {
     @Column({ type: DataType.BIGINT, allowNull: true, })
     currencyId: number;
 
-    @Column(DataType.INTEGER)
+    @Column({ type: DataType.DECIMAL(10, 2), })
     amount: number;
 
     @Column({

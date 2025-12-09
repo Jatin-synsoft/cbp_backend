@@ -53,7 +53,7 @@ export class AppService {
             <h1>Consultant Booking Platform API</h1>
             <p><strong>Description:</strong> NestJS backend for a consultant booking and scheduling platform.</p>
             <p><strong>Version:</strong> 1.0</p>
-            <a class="btn" href="/api" target="_blank">Go to Swagger Docs</a>
+            <a class="btn" href="/api">Go to Swagger Docs</a>
           </div>
         </body>
       </html>

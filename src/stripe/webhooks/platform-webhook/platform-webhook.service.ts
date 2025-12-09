@@ -104,7 +104,7 @@ export class PlatformWebhookService {
             consultantId: booking.consultantId,
             amount: consultantAmount / 100,
             currencyId: booking.currencyId,
-            platformFee: platformFee / 100,
+            // platformFee: platformFee / 100,
             stripeTransferId: charge.id,
             status: PayoutStatus.PENDING,
         });
@@ -182,13 +182,11 @@ export class PlatformWebhookService {
         });
         if (!tx) return;
 
-        tx.status = BookingTransactionStatus.PAYMENT_FAILED;
-        await tx.save();
+        // Delete Booking
+        await Booking.destroy({ where: { id: tx.bookingId } });
 
-        await Booking.update(
-            { status: BookingStatus.PAYMENT_FAILED },
-            { where: { id: tx.bookingId } }
-        );
+        // Delete Transaction
+        await BookingTransaction.destroy({ where: { id: tx.id } });
     }
 
     async handlePaymentCanceled(event: Stripe.Event) {
@@ -199,13 +197,55 @@ export class PlatformWebhookService {
         });
         if (!tx) return;
 
-        await tx.update({ status: BookingTransactionStatus.PAYMENT_CANCELLED });
+        // Delete Booking
+        await Booking.destroy({ where: { id: tx.bookingId } });
 
-        await Booking.update(
-            { status: BookingStatus.PAYMENT_CANCELLED },
-            { where: { id: tx.bookingId } }
-        );
+        // Delete Transaction
+        await BookingTransaction.destroy({ where: { id: tx.id } });
 
-        this.logger.log(`Payment cancelled for PI:${intent.id}`);
+        this.logger.log(`Payment cancelled and records deleted for PI: ${intent.id}`);
     }
+
+    async handleApplicationFeeCreated(event: Stripe.Event) {
+        const fee = event.data.object as Stripe.ApplicationFee;
+
+        const convertedFee = fee.amount; // cents
+        const currency = fee.currency;
+
+        // Ensure charge ID is always a string
+        const chargeId =
+            typeof fee.originating_transaction === "string"
+                ? fee.originating_transaction
+                : fee.originating_transaction?.id;
+
+        if (!chargeId) {
+            this.logger.error("❌ No originating charge ID in application_fee.created");
+            return;
+        }
+
+        // Now this works — chargeId is guaranteed to be a string
+        const transaction = await BookingTransaction.findOne({
+            where: { transactionId: chargeId },
+            include: [Booking],
+        });
+
+        if (!transaction) {
+            this.logger.error(`❌ No BookingTransaction found for chargeId: ${chargeId}`);
+            return;
+        }
+
+        const booking = transaction.booking;
+
+        if (!booking) return;
+
+        await booking.update({
+            platformFee: convertedFee / 100,
+        });
+
+        this.logger.log(
+            `Updated Booking ${booking.id} with platform fee: ${convertedFee / 100} ${currency}`
+        );
+    }
+
+
 }

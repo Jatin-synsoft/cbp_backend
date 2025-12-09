@@ -17,6 +17,11 @@ export class StripeController {
     return { url };
   }
 
+  @Get('login-link/:accountId')
+  async getLoginLink(@Param('accountId') accountId: string) {
+    return this.stripeService.createLoginLink(accountId);
+  }
+
   // @Get('create-payment-intent/:id')
   // @UseGuards(JwtRolesGuard)
   // @ApiParam({ name: 'id', example: 'acct_1QAbCdEfGh123456' })

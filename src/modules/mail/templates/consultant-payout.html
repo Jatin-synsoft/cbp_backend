@@ -1,116 +1,62 @@
-<!DOCTYPE html>
-<html lang="en">
+<style>
+    body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        background-color: #f4f6f8;
+        margin: 0;
+        padding: 0;
+    }
 
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Consultant Payout Summary</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background-color: #f4f6f8;
-            margin: 0;
-            padding: 0;
-        }
+    .content {
+        padding: 30px;
+        color: #333333;
+        line-height: 1.6;
+        font-size: 13px;
+    }
 
-        .container {
-            max-width: 600px;
-            background-color: #ffffff;
-            margin: 40px auto;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-        }
+    .details {
+        margin: 20px 0;
+        background-color: #f9fafc;
+        border: 1px solid #e4e6eb;
+        border-radius: 8px;
+        padding: 15px 20px;
+        font-size: 13px;
+        color: #333;
+    }
 
-        .header {
-            background-color: #1b75bc;
-            color: #ffffff;
-            text-align: center;
-            padding: 25px 15px;
-        }
+    .details p {
+        margin: 6px 0;
+    }
 
-        .header h2 {
-            margin: 0;
-            font-size: 20px;
-            font-weight: 600;
-        }
+    .brand {
+        color: #1b75bc;
+        font-weight: 600;
+    }
+</style>
 
-        .content {
-            padding: 30px;
-            color: #333333;
-            line-height: 1.6;
-            font-size: 13px;
-        }
+<div class="content">
+    <p>Hi {{consultantName}},</p>
 
-        .details {
-            margin: 20px 0;
-            background-color: #f9fafc;
-            border: 1px solid #e4e6eb;
-            border-radius: 8px;
-            padding: 15px 20px;
-            font-size: 13px;
-            color: #333;
-        }
+    <p>
+        A new booking payment has been successfully processed on
+        <span class="brand">Boardtide</span>.
+    </p>
 
-        .details p {
-            margin: 6px 0;
-        }
+    <p>Here is the payment and earnings summary:</p>
 
-        .footer {
-            background-color: #f9f9f9;
-            text-align: center;
-            padding: 15px;
-            font-size: 11px;
-            color: #777777;
-            border-top: 1px solid #eeeeee;
-        }
-
-        .brand {
-            color: #1b75bc;
-            font-weight: 600;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="container">
-        <div class="header">
-            <h2>Payment Received for Your Session</h2>
-        </div>
-
-        <div class="content">
-            <p>Hi {{consultantName}},</p>
-
-            <p>
-                A new booking payment has been successfully processed on
-                <span class="brand">Boardtide</span>.
-            </p>
-
-            <p>Here is the payment and earnings summary:</p>
-
-            <div class="details">
-                <p><strong>Total Amount Paid by User:</strong> {{currencySymbol}}{{totalAmount}}</p>
-                <p><strong>Platform Fee:</strong> {{currencySymbol}}{{platformFee}}</p>
-                <p><strong>Your Earnings:</strong> {{currencySymbol}}{{consultantReceives}}</p>
-                <hr />
-                <p><strong>Booked By:</strong> {{userFullName}}</p>
-                <p><strong>Schedule Date:</strong> {{scheduleDate}}</p>
-                <p><strong>Schedule Time:</strong> {{time}}</p>
-            </div>
-
-            <p>
-                Your payout will be processed automatically once the Stripe
-                transfer is completed. You can view this payment and all past
-                earnings in your consultant portal.
-            </p>
-
-            <p>Best regards,<br />The Boardtide Team</p>
-        </div>
-
-        <div class="footer">
-            © {{year}} Boardtide. All rights reserved.
-        </div>
+    <div class="details">
+        <p><strong>Total Amount Paid by User:</strong> {{currencySymbol}}{{totalAmount}}</p>
+        <p><strong>Platform Fee:</strong> $ {{platformFee}}</p>
+        <p><strong>Your Earnings:</strong> {{currencySymbol}}{{consultantReceives}}</p>
+        <hr />
+        <p><strong>Booked By:</strong> {{userFullName}}</p>
+        <p><strong>Schedule Date:</strong> {{scheduleDate}}</p>
+        <p><strong>Schedule Time:</strong> {{time}}</p>
     </div>
-</body>
 
-</html>
+    <p>
+        Your payout will be processed automatically once the Stripe transfer is
+        completed. You can view this payment and your past earnings in your consultant portal.
+    </p>
+
+    <p>Best regards,<br />The Boardtide Team</p>
+</div>

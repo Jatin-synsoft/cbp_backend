@@ -11,7 +11,7 @@ import {
 import { Booking } from "./booking.model";
 import { Currency } from "./currencies.model";
 import { User } from "./user.model";
-import { PayoutStatus } from "src/common/enums/booking-status.enum";
+import { PayoutStatus } from "../../common/enums/booking-status.enum";
 
 @Table({ tableName: "consultant_payouts", timestamps: true })
 export class ConsultantPayout extends Model<ConsultantPayout> {
@@ -28,7 +28,7 @@ export class ConsultantPayout extends Model<ConsultantPayout> {
     @Column(DataType.BIGINT)
     consultantId: number;
 
-    @Column(DataType.INTEGER)
+    @Column({ type: DataType.DECIMAL(10, 2), })
     amount: number;
 
     @ForeignKey(() => Currency)

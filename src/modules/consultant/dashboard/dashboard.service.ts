@@ -5,6 +5,7 @@ import { BookingTransaction } from 'src/database/models/bookingTransaction.model
 import { ConsultantPayout } from 'src/database/models/consultantPayout.model';
 import { ConsultantRating } from 'src/database/models/consultantRating.model';
 import { Op, fn, col } from 'sequelize';
+import { Currency } from 'src/database/models/currencies.model';
 
 @Injectable()
 export class DashboardService {
@@ -13,70 +14,98 @@ export class DashboardService {
     @InjectModel(BookingTransaction) private readonly transactionModel: typeof BookingTransaction,
     @InjectModel(ConsultantPayout) private readonly payoutModel: typeof ConsultantPayout,
     @InjectModel(ConsultantRating) private readonly ratingModel: typeof ConsultantRating,
+    @InjectModel(Currency) private readonly currencyModel: typeof Currency
   ) { }
 
-  // 1️⃣ Consultant Overview
   async getOverview(consultantId: number) {
-    try {
-      const totalSessions = await this.bookingModel.count({ where: { consultantId } });
-      const completedSessions = await this.bookingModel.count({
-        where: { consultantId, status: 'COMPLETED' },
-      });
-      const pendingSessions = await this.bookingModel.count({
-        where: { consultantId, status: 'PENDING' },
-      });
+    const totalBookings = await this.bookingModel.count({ where: { consultantId } });
+    const completedBookings = await this.bookingModel.count({
+      where: { consultantId, status: 'COMPLETED' },
+    });
+    const confirmedBookings = await this.bookingModel.count({
+      where: { consultantId, status: { [Op.in]: ['CONFIRMED'] } },
+    });
+    const totalEarnings = await this.payoutModel.findOne({
+      attributes: [
+        [fn('SUM', col('ConsultantPayout.amount')), 'amount'],
+      ],
 
-      return {
-        statusCode: 200,
-        message: 'Consultant overview fetched successfully',
-        data: { totalSessions, completedSessions, pendingSessions },
-      };
-    } catch (err) {
-      console.error(err);
-      throw new BadRequestException('Failed to fetch overview');
-    }
+      where: { consultantId, status: 'TRANSFER_SENT' },
+
+      include: [
+        {
+          model: this.currencyModel,
+          as: 'currency',
+          attributes: ['code', 'symbol'],
+        },
+      ],
+
+      group: ['currency.id'],
+
+    });
+
+
+    return {
+      statusCode: 200,
+      message: 'Consultant overview fetched successfully',
+      data: { totalBookings, completedBookings, confirmedBookings, totalEarnings: { amount: totalEarnings?.amount ?? 0, symbol: totalEarnings?.currency.symbol } },
+    };
+
   }
 
-  // 2️⃣ Today's Sessions
   async getTodaySessions(consultantId: number) {
-    try {
-      const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0];
 
-      const sessions = await this.bookingModel.findAll({
-        where: { consultantId, bookingDate: today },
-        include: [{ association: 'customer', attributes: ['id', 'fullName', 'email'] }],
-        order: [['startTime', 'ASC']],
-      });
+    const sessions = await this.bookingModel.findAll({
+      where: { consultantId, bookingDate: today },
+      include: [{ association: 'customer', attributes: ['id', 'fullName', 'email'] }],
+      order: [['startTime', 'ASC']],
+    });
 
-      return {
-        statusCode: 200,
-        message: 'Today sessions fetched successfully',
-        data: sessions,
-      };
-    } catch (err) {
-      console.error(err);
-      throw new BadRequestException('Failed to fetch today sessions');
-    }
+    return {
+      statusCode: 200,
+      message: 'Today sessions fetched successfully',
+      data: sessions,
+    };
+
   }
 
-  // 3️⃣ Earnings Summary (monthly)
   async getEarningsSummary(consultantId: number) {
     try {
       const earnings = await this.payoutModel.findAll({
         attributes: [
-          [fn('DATE_FORMAT', col('createdAt'), '%Y-%m'), 'month'],
-          [fn('SUM', col('amount')), 'totalEarnings'],
-          [fn('SUM', col('platformFee')), 'platformFees'],
+          [
+            fn('DATE_FORMAT', col('ConsultantPayout.createdAt'), '%Y-%m'),
+            'month',
+          ],
+          [fn('SUM', col('ConsultantPayout.amount')), 'totalEarnings'],
+          // [fn('SUM', col('ConsultantPayout.platformFee')), 'platformFees'],
         ],
+
         where: { consultantId, status: 'TRANSFER_SENT' },
-        group: ['month'],
-        order: [['month', 'ASC']],
+
+        include: [
+          {
+            model: this.currencyModel,
+            as: 'currency',
+            attributes: ['code', 'symbol'],
+          },
+        ],
+
+        group: [
+          fn('DATE_FORMAT', col('ConsultantPayout.createdAt'), '%Y-%m'),
+          'currency.id',
+        ],
+
+        order: [
+          [fn('DATE_FORMAT', col('ConsultantPayout.createdAt'), '%Y-%m'), 'ASC'],
+        ],
       });
 
       return {
         statusCode: 200,
         message: 'Earnings summary fetched successfully',
-        data: earnings,
+        data: earnings[0],
       };
     } catch (err) {
       console.error(err);
@@ -84,31 +113,26 @@ export class DashboardService {
     }
   }
 
-  // 4️⃣ Recent Bookings
   async getRecentBookings(consultantId: number) {
-    try {
-      const bookings = await this.bookingModel.findAll({
-        where: { consultantId },
-        include: [
-          { association: 'customer', attributes: ['id', 'fullName', 'email'] },
-          { association: 'consultantPayout', attributes: ['amount', 'status'] },
-        ],
-        limit: 5,
-        order: [['createdAt', 'DESC']],
-      });
+    const bookings = await this.bookingModel.findAll({
+      where: { consultantId, status: { [Op.in]: ['CONFIRMED'] } },
+      include: [
+        { association: 'customer', attributes: ['id', 'fullName', 'email'] },
+        { association: 'consultantPayout', attributes: ['amount', 'status'] },
+        { association: 'currency', attributes: ['code', 'symbol'] },
+      ],
+      limit: 5,
+      order: [['createdAt', 'DESC']],
+    });
 
-      return {
-        statusCode: 200,
-        message: 'Recent bookings fetched successfully',
-        data: bookings,
-      };
-    } catch (err) {
-      console.error(err);
-      throw new BadRequestException('Failed to fetch recent bookings');
-    }
+    return {
+      statusCode: 200,
+      message: 'Recent bookings fetched successfully',
+      data: bookings,
+    };
+
   }
 
-  // 5️⃣ Consultant Ratings
   async getRatings(consultantId: number) {
     const ratings = await this.ratingModel.findAll({
       where: { consultantId },

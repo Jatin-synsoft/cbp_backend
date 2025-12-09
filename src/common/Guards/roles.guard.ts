@@ -35,9 +35,9 @@ export class JwtRolesGuard extends AuthGuard('jwt') {
         const request = context.switchToHttp().getRequest();
         request.user = user;
 
-        if (!user.isNewUser && user.isVerified === false) {
-            throw new ForbiddenException('User account is not verified.');
-        }
+        // if (!user.isNewUser && user.isVerified === false) {
+        //     throw new ForbiddenException('User account is not verified.');
+        // }
 
 
         if (!user.status) {

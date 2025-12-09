@@ -19,6 +19,7 @@ import { Currency } from 'src/database/models/currencies.model';
 import { StripeService } from 'src/stripe/stripe.service';
 import { MailService } from '../mail/mail-sendgrid.service';
 import { url } from 'inspector';
+import { Booking } from 'src/database/models/booking.model';
 
 @Injectable()
 export class AuthService {
@@ -30,6 +31,7 @@ export class AuthService {
     @InjectModel(ConsultantDocument) private documentModel: typeof ConsultantDocument,
     @InjectModel(ConsultantSpecialty) private specialtyModel: typeof ConsultantSpecialty,
     @InjectModel(SpecialtiesMst) private specialtymasterModel: typeof SpecialtiesMst,
+    @InjectModel(Booking) private bookingModel: typeof Booking,
     private readonly mailService: MailService,
     private readonly affindaService: AffindaService,
     private readonly stripeService: StripeService
@@ -178,9 +180,9 @@ export class AuthService {
         return user.toJSON();
       }
 
-      if (!user.isVerified) {
-        throw new ForbiddenException('Profile under review. Please wait for approval.');
-      }
+      // if (!user.isVerified) {
+      //   throw new ForbiddenException('Profile under review. Please wait for approval.');
+      // }
     } else {
       if (user.status !== UserStatus.ACTIVE) {
         const msg = STATUS_MESSAGES[user.status] || 'Invalid user status.';
@@ -331,13 +333,43 @@ export class AuthService {
       await profile.update(dto);
     }
 
+    // Consultant logic
     if (user.roles?.some(r => r.id === 2)) {
+
+      // --------------------------------
+      // 💰 CURRENCY UPDATE RULES
+      // --------------------------------
+      if (dto.currencyId) {
+        const consultantBookingsCount = await this.bookingModel.count({
+          where: { consultantId: userId },
+        });
+
+        if (consultantBookingsCount > 0) {
+          throw new BadRequestException(
+            'You cannot change your currency because you already have bookings.'
+          );
+        }
+
+        // 👇 FIX: Update profile currency, not user
+        profile.currencyId = dto.currencyId;
+        await profile.save();
+      }
+
+      // -------------------------
+      // SPECIALTIES
+      // -------------------------
       if (dto.specialties) {
         await this.specialtyModel.destroy({ where: { userId } });
         const specialtiesToCreate = dto.specialties.map(id => ({ userId, specialtyId: id }));
         await this.specialtyModel.bulkCreate(specialtiesToCreate);
       }
-      const resumeRecord = await this.documentModel.findOne({ where: { userId, documentType: 'CV' } });
+
+      // -------------------------
+      // RESUME / CV
+      // -------------------------
+      const resumeRecord = await this.documentModel.findOne({
+        where: { userId, documentType: 'CV' },
+      });
 
       const parsedData = {
         summary: dto.summary || null,
@@ -346,10 +378,13 @@ export class AuthService {
         projects: dto.projects || null,
       };
 
-      const isFirstTimeResumeUpdate = !resumeRecord || !resumeRecord.parsedData || Object.values(resumeRecord.parsedData).every(v => v == null);
+      const isFirstTimeResumeUpdate =
+        !resumeRecord ||
+        !resumeRecord.parsedData ||
+        Object.values(resumeRecord.parsedData).every(v => v == null);
 
       if (resumeRecord) {
-        resumeRecord.parsedData = parsedData ?? resumeRecord.parsedData;
+        resumeRecord.parsedData = parsedData;
         resumeRecord.fileUrl = dto.fileUrl ?? resumeRecord.fileUrl;
         await resumeRecord.save();
       } else {
@@ -361,6 +396,9 @@ export class AuthService {
         });
       }
 
+      // -------------------------
+      // SEND PROFILE COMPLETE EMAIL
+      // -------------------------
       if (isFirstTimeResumeUpdate) {
         this.mailService.sendMailTemplate({
           templateName: 'profile-complete.html',
@@ -369,14 +407,17 @@ export class AuthService {
             email: user.email,
             phone: user.phone,
             role: user.roles[0].name.toLowerCase(),
-            url: `${process.env.FRONTEND_URL}/admin/user-detail/${user.id}`
+            url: `${process.env.FRONTEND_URL}/admin/user-detail/${user.id}`,
           },
           sendAsync: true,
         });
       }
     }
+
     return { message: 'Profile updated successfully' };
   }
+
+
 
 
   async seedSuperAdmin() {

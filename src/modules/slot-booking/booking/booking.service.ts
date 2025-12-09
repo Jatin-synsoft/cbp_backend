@@ -41,6 +41,124 @@ export class BookingService {
     private stripeService: StripeService,
   ) { }
 
+  // async createBooking(bookingDto: CreateBookingDto, userId: number) {
+  //   const transaction = await this.sequelize.transaction();
+
+  //   try {
+  //     const { consultantId, bookingDate, startTime, endTime, notes, scheduleDate } = bookingDto;
+
+  //     const consultant = await this.userModel.findOne({
+  //       where: { id: consultantId },
+  //       include: [
+  //         {
+  //           model: this.profileModel,
+  //           attributes: ['id', 'hourlyRate', 'currencyId', 'stripeAccountId', 'stripeAccountStatus'],
+  //           include: [{
+  //             model: this.currencyModel,
+  //             attributes: ['id', 'code']
+  //           }],
+  //         },
+  //       ]
+  //     });
+
+  //     if (!consultant) throw new BadRequestException('Invalid Consultant');
+  //     if (consultant.profile.stripeAccountStatus !== StripeAccountStatus.VERIFIED)
+  //       throw new BadRequestException('Stripe account not verified');
+
+  //     const consultantAccountId = consultant.profile.stripeAccountId;
+  //     const currencyCode = consultant.profile.currency.code;
+
+  //     const hourlyRate = consultant.profile.hourlyRate;
+
+  //     const platformFeePercent = Number(process.env.PLATFORM_FEE) || 0;
+  //     const adminfeePercent = Number(process.env.ADMIN_FEE) || 0;
+
+  //     const platformFeeAmount = (hourlyRate * platformFeePercent) / 100;
+
+  //     const totalAmount = +hourlyRate + +platformFeeAmount;
+  //     const adminFee = (totalAmount * adminfeePercent) / 100;
+
+  //     const tz = consultant.profile.timeZone || "UTC";
+  //     const slotStart = dayjs.tz(`${scheduleDate} ${startTime}`, "YYYY-MM-DD HH:mm", tz);
+  //     const slotEnd = dayjs.tz(`${scheduleDate} ${endTime}`, "YYYY-MM-DD HH:mm", tz);
+
+  //     // 1️⃣ Check availability
+  //     const checkSlots = await this.rruleService.getRruleAvailability(
+  //       consultantId,
+  //       slotStart.format("YYYY-MM-DD"),
+  //       slotEnd.add(1, "day").format("YYYY-MM-DD"),
+  //       tz
+  //     );
+
+  //     const slot = checkSlots.availability.find((item) => {
+  //       const [start] = item.slot.split(" - ");
+  //       const dateObj = new Date(start);
+  //       const date = dateObj.toISOString().split("T")[0];
+  //       const time = dateObj.toISOString().split("T")[1].slice(0, 5);
+
+  //       return (
+  //         date === slotStart.format("YYYY-MM-DD") &&
+  //         time === startTime &&
+  //         item.isAvailable
+  //       );
+  //     });
+
+  //     if (!slot) {
+  //       return { isValid: false, conflicts: [] };
+  //     }
+
+  //     // 2️⃣ Create booking
+  //     const booking = await this.bookingModel.create(
+  //       {
+  //         consultantId,
+  //         customerId: userId,
+  //         scheduleDate: slotStart.toDate(),
+  //         bookingDate: new Date(bookingDate),
+  //         startTime: slotStart.format("HH:mm"),
+  //         endTime: slotEnd.format("HH:mm"),
+  //         currencyId: consultant.profile.currency.id,
+  //         notes,
+  //         amount: hourlyRate,
+  //         platformFee: adminFee,
+  //         totalAmount
+  //       },
+  //       { transaction }
+  //     );
+
+  //     // 3️⃣ Create Stripe payment intent (split payment)
+  //     const stripeResp = await this.stripeService.createSplitPaymentIntent(
+  //       consultantAccountId,
+  //       totalAmount,
+  //       currencyCode
+  //     );
+
+  //     // 4️⃣ Save transaction record
+  //     await this.bookingTransactionModel.create(
+  //       {
+  //         bookingId: booking.id,
+  //         paymentIntentId: stripeResp.paymentIntentId,
+  //         transactionId: null,
+  //         currencyId: consultant.profile.currency.id,
+  //         amount: totalAmount
+  //       },
+  //       { transaction }
+  //     );
+
+  //     await transaction.commit();
+
+  //     return {
+  //       isValid: true,
+  //       message: "Booking created successfully",
+  //       booking,
+  //       clientSecret: stripeResp.clientSecret
+  //     };
+
+  //   } catch (error) {
+  //     await transaction.rollback();
+  //     throw error;
+  //   }
+  // }
+
   async createBooking(bookingDto: CreateBookingDto, userId: number) {
     const transaction = await this.sequelize.transaction();
 
@@ -52,7 +170,7 @@ export class BookingService {
         include: [
           {
             model: this.profileModel,
-            attributes: ['id', 'hourlyRate', 'currencyId', 'stripeAccountId', 'stripeAccountStatus'],
+            attributes: ['id', 'hourlyRate', 'currencyId', 'stripeAccountId', 'stripeAccountStatus', 'timeZone'],
             include: [{
               model: this.currencyModel,
               attributes: ['id', 'code']
@@ -67,16 +185,23 @@ export class BookingService {
 
       const consultantAccountId = consultant.profile.stripeAccountId;
       const currencyCode = consultant.profile.currency.code;
+      const hourlyRate = Number(consultant.profile.hourlyRate);
 
-      const hourlyRate = consultant.profile.hourlyRate;
+      // ------------------------------
+      // ⭐⭐ 10% From User & 10% From Consultant
+      // ------------------------------
 
-      const platformFeePercent = Number(process.env.PLATFORM_FEE) || 0;
+      const userFeePercent = 10;
+      const consultantFeePercent = 10;
 
-      const platformFeeAmount = (hourlyRate * platformFeePercent) / 100;
+      const userFee = (hourlyRate * userFeePercent) / 100;
+      const totalAmount = hourlyRate + userFee;
 
-      const amount = +hourlyRate + +platformFeeAmount;
+      const consultantFee = (hourlyRate * consultantFeePercent) / 100;
+      const consultantPayout = hourlyRate - consultantFee;
 
-      const bookingAmount = amount * 100;
+      const platformFee = userFee + consultantFee;
+
 
       const tz = consultant.profile.timeZone || "UTC";
       const slotStart = dayjs.tz(`${scheduleDate} ${startTime}`, "YYYY-MM-DD HH:mm", tz);
@@ -107,7 +232,6 @@ export class BookingService {
         return { isValid: false, conflicts: [] };
       }
 
-      // 2️⃣ Create booking
       const booking = await this.bookingModel.create(
         {
           consultantId,
@@ -118,26 +242,27 @@ export class BookingService {
           endTime: slotEnd.format("HH:mm"),
           currencyId: consultant.profile.currency.id,
           notes,
-          amount
+          amount: hourlyRate,
+          platformFee,
+          totalAmount
         },
         { transaction }
       );
 
-      // 3️⃣ Create Stripe payment intent (split payment)
       const stripeResp = await this.stripeService.createSplitPaymentIntent(
         consultantAccountId,
-        bookingAmount,
+        totalAmount,
+        platformFee,
         currencyCode
       );
 
-      // 4️⃣ Save transaction record
       await this.bookingTransactionModel.create(
         {
           bookingId: booking.id,
           paymentIntentId: stripeResp.paymentIntentId,
           transactionId: null,
           currencyId: consultant.profile.currency.id,
-          amount
+          amount: totalAmount
         },
         { transaction }
       );
@@ -156,7 +281,6 @@ export class BookingService {
       throw error;
     }
   }
-
 
   async findAllBookings(user: any, query: PaginationDto) {
     let { page = 1, limit = 10, search = '', status } = query;

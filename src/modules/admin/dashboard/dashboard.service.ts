@@ -2,14 +2,14 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from 'src/database/models/user.model';
 import { Role } from 'src/database/models/role.model';
-import { Op, fn, col } from 'sequelize';
+import { Op, fn, col, literal } from 'sequelize';
 
 import { Booking } from 'src/database/models/booking.model';
 import { BookingTransaction } from 'src/database/models/bookingTransaction.model';
 import { ConsultantPayout } from 'src/database/models/consultantPayout.model';
-import { ConsultantRating } from 'src/database/models/consultantRating.model';
 
 import { BookingStatus, BookingTransactionStatus, PayoutStatus } from 'src/common/enums/booking-status.enum';
+import { Currency } from 'src/database/models/currencies.model';
 
 @Injectable()
 export class DashboardService {
@@ -19,6 +19,7 @@ export class DashboardService {
     @InjectModel(Booking) private readonly bookingModel: typeof Booking,
     @InjectModel(BookingTransaction) private readonly transactionModel: typeof BookingTransaction,
     @InjectModel(ConsultantPayout) private readonly payoutModel: typeof ConsultantPayout,
+    @InjectModel(Currency) private readonly currencyModel: typeof Currency
   ) { }
 
   async getUserCounts() {
@@ -143,54 +144,156 @@ export class DashboardService {
       data: users,
     };
   }
+  // async getEarningsSummary() {
+  //   const monthly = await this.bookingModel.findOne({
+  //     attributes: [
+  //       [fn('SUM', col('platformFee')), 'total'],
+  //     ],
+  //     where: {
+  //       status: { [Op.in]: [BookingStatus.COMPLETED, BookingStatus.RESCHEDULED, BookingStatus.CONFIRMED] },
+  //     },
+  //     include: [
+  //       {
+  //         model: this.currencyModel,
+  //         as: 'currency',
+  //         attributes: ['code', 'symbol'],
+  //       },
+  //     ],
+  //     group: ['currency.id'],
+  //   });
+
+  //   // If no data found return default
+  //   if (!monthly) {
+  //     return {
+  //       statusCode: 200,
+  //       message: 'Super admin earnings summary fetched successfully',
+  //       data: {
+  //         total: 0,
+  //         symbol: '$',
+  //         currency: null
+  //       }
+  //     };
+  //   }
+
+  //   // If found, return normal data
+  //   return {
+  //     statusCode: 200,
+  //     message: 'Super admin earnings summary fetched successfully',
+  //     data: {
+  //       ...monthly.toJSON(),
+  //       symbol: monthly.currency?.symbol || null,
+  //     },
+  //   };
+  // }
+
+
+  // async getTopConsultants() {
+  //   const consultants = await this.userModel.findAll({
+  //     include: [
+  //       { model: Role, where: { id: 2 }, through: { attributes: [] } },
+  //       {
+  //         model: this.payoutModel,
+  //         attributes: ['amount'],
+  //         where: { status: PayoutStatus.TRANSFER_SENT },
+  //         required: false,
+  //         include: [{ model: this.currencyModel, attributes: ['code', 'symbol'] }],
+  //       },
+  //     ],
+  //   });
+
+  //   const result = consultants
+  //     .map((c) => {
+  //       const earnings = c.payouts?.reduce((sum, p) => sum + Number(p.amount || 0), 0) || 0;
+
+  //       return {
+  //         id: c.id,
+  //         fullName: c.fullName,
+  //         email: c.email,
+  //         earnings,
+  //       };
+  //     })
+  //     .sort((a, b) => b.earnings - a.earnings)
+  //     .slice(0, 5);
+
+  //   return {
+  //     statusCode: 200,
+  //     message: 'Top consultants fetched successfully',
+  //     data: result,
+  //   };
+  // }
 
   async getEarningsSummary() {
-    const monthly = await this.transactionModel.findAll({
+    const monthly = await this.bookingModel.findOne({
       attributes: [
-        [fn('DATE_FORMAT', col('createdAt'), '%Y-%m'), 'month'],
-        [fn('SUM', col('amount')), 'total'],
+        [fn('SUM', col('platformFee')), 'total'],
       ],
-      where: { status: BookingTransactionStatus.PAYMENT_SUCCESS },
-      group: ['month'],
-      order: [['month', 'ASC']],
+      where: {
+        status: {
+          [Op.in]: [
+            BookingStatus.COMPLETED,
+            BookingStatus.RESCHEDULED,
+            BookingStatus.CONFIRMED
+          ]
+        },
+      },
+      raw: true,
     });
+
+    const total = monthly['total'] ?? 0;
 
     return {
       statusCode: 200,
-      message: 'Earnings summary fetched successfully',
-      data: monthly,
+      message: 'Super admin earnings summary fetched successfully',
+      data: {
+        total,
+        symbol: '$'
+      },
     };
   }
 
-  // ---------------------------------------
-  // 7. Top Consultants (By Payouts)
-  // ---------------------------------------
-  async getTopConsultants() {
-    const consultants = await this.userModel.findAll({
+  async getTopConsultants(limit = 6) {
+    const topConsultants = await this.payoutModel.findAll({
+      attributes: [
+        'consultantId',
+        'currencyId',
+        [fn('SUM', col('amount')), 'totalAmount'],
+      ],
       include: [
-        { model: Role, where: { id: 2 }, through: { attributes: [] } },
         {
-          model: this.payoutModel,
-          attributes: ['amount'],
-          where: { status: PayoutStatus.TRANSFER_SENT },
-          required: false,
+          model: User,
+          attributes: ['id', 'fullName', 'email'],
+        },
+        {
+          model: Currency,
+          attributes: ['id', 'code', 'symbol'],
         },
       ],
+      group: [
+        'consultantId',        // ConsultantPayout
+        'currencyId',          // ConsultantPayout
+        'consultant.id',       // User
+        'consultant.fullName', // User attributes
+        'consultant.email',    // User attributes
+        'currency.id',         // Currency
+        'currency.code',       // Currency attributes
+        'currency.symbol',     // Currency attributes
+      ],
+      order: [[literal('totalAmount'), 'DESC']],
+      limit,
     });
 
-    const result = consultants
-      .map((c) => {
-        const earnings = c.payouts?.reduce((sum, p) => sum + Number(p.amount || 0), 0) || 0;
+    const result = topConsultants.map((p) => {
+      const pp = p.toJSON() as any; // <-- tell TS to ignore typings
+      return {
+        id: pp.consultant.id,
+        fullName: pp.consultant.fullName,
+        email: pp.consultant.email,
+        currency: pp.currency.code,
+        earnings: `${pp.currency.symbol} ${pp.totalAmount}`, // no TS error now
+      };
+    });
 
-        return {
-          id: c.id,
-          fullName: c.fullName,
-          email: c.email,
-          earnings,
-        };
-      })
-      .sort((a, b) => b.earnings - a.earnings)
-      .slice(0, 5);
+
 
     return {
       statusCode: 200,
@@ -199,3 +302,4 @@ export class DashboardService {
     };
   }
 }
+

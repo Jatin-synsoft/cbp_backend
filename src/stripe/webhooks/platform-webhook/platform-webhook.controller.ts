@@ -50,6 +50,10 @@ export class PlatformWebhookController {
           await this.platformWebhookService.handleTransferCreated(event);
           break;
 
+        case 'application_fee.created':
+          await this.platformWebhookService.handleApplicationFeeCreated(event);
+          break;
+
         case "payment_intent.payment_failed":
           await this.platformWebhookService.handlePaymentFailed(event);
           break;

@@ -1,128 +1,40 @@
-<!DOCTYPE html>
-<html lang="en">
+<div style="
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #333333;
+    line-height: 1.6;
+    font-size: 15px;
+">
 
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>New User Registered</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background-color: #f4f6f8;
-            margin: 0;
-            padding: 0;
-        }
+    <h2 style="color:#007b83; margin-top: 0;">
+        🎉 New User Registered
+    </h2>
 
-        .container {
-            max-width: 600px;
-            background-color: #ffffff;
-            margin: 40px auto;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-        }
+    <p>Hello Admin,</p>
 
-        .header {
-            background-color: #007b83;
-            color: #ffffff;
-            text-align: center;
-            padding: 20px 10px;
-        }
+    <p>
+        A new <strong style="color:#007b83;">{{role}}</strong>
+        has just registered on the <span style="font-weight: 600;">Consultant Booking Platform</span>.
+    </p>
 
-        .header h2 {
-            margin: 0;
-            font-size: 22px;
-            letter-spacing: 0.5px;
-        }
+    <p><strong style="color:#007b83;">Name:</strong> {{fullName}}</p>
+    <p><strong style="color:#007b83;">Email:</strong> {{email}}</p>
+    <p><strong style="color:#007b83;">Phone:</strong> {{phone}}</p>
 
-        .role-badge {
-            display: inline-block;
-            background-color: #e6f7f8;
-            color: #007b83;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 13px;
-            border-radius: 20px;
-            padding: 6px 15px;
-            margin-top: 10px;
-        }
+    <a href="{{url}}" style="
+           display:inline-block;
+           background-color:#007b83;
+           color:#ffffff !important;
+           text-decoration:none;
+           padding:10px 20px;
+           margin-top:20px;
+           border-radius:6px;
+           font-weight:500;
+       ">
+        View in Dashboard
+    </a>
 
-        .content {
-            padding: 25px 30px;
-            color: #333333;
-            line-height: 1.6;
-        }
-
-        .content p {
-            margin: 8px 0;
-            font-size: 15px;
-        }
-
-        .content strong {
-            color: #007b83;
-        }
-
-        .footer {
-            background-color: #f9f9f9;
-            text-align: center;
-            padding: 15px;
-            font-size: 13px;
-            color: #777777;
-            border-top: 1px solid #eeeeee;
-        }
-
-        .btn {
-            display: inline-block;
-            background-color: #007b83;
-            color: #ffffff;
-            text-decoration: none;
-            padding: 10px 20px;
-            margin-top: 20px;
-            border-radius: 6px;
-            font-weight: 500;
-        }
-
-        .btn:hover {
-            background-color: #009ca3;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="container">
-        <div class="header">
-            <h2>🎉 New User Registered</h2>
-            <div class="role-badge">{{role}}</div>
-        </div>
-
-        <div class="content">
-            <p>Hello Admin,</p>
-
-            <p>
-                A new <strong>{{role}}</strong> has just registered on the
-                <span class="brand">Consultant Booking Platform</span>.
-            </p>
-
-            <p>Here are the user details:</p>
-
-            <p><strong>Name:</strong> {{fullName}}</p>
-            <p><strong>Email:</strong> {{email}}</p>
-            <p><strong>Phone:</strong> {{phone}}</p>
-
-            <p>
-                Please review and verify this account in your admin dashboard.
-            </p>
-
-            <a href="{{url}}" class="btn">View in Dashboard</a>
-
-            <p>Thank you,<br>The Consultant Booking Platform Team</p>
-        </div>
-
-        <div class="footer">
-            © {{year}} Consultant Booking Platform. All rights reserved.
-        </div>
-    </div>
-</body>
-
-
-</html>
+    <p style="margin-top: 20px;">
+        Thank you,<br />
+        <span style="font-weight: 600;">The Consultant Booking Platform Team</span>
+    </p>
+</div>

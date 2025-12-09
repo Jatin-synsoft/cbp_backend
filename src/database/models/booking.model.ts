@@ -14,6 +14,7 @@ import { Currency } from "./currencies.model";
 import { BookingStatus } from "../../common/enums/booking-status.enum";
 import { ConsultantPayout } from "./consultantPayout.model";
 import { ConsultantRating } from "./consultantRating.model";
+import { BookingTransaction } from "./bookingTransaction.model";
 
 @Table({ tableName: "bookings", timestamps: true, })
 export class Booking extends Model<Booking> {
@@ -83,6 +84,18 @@ export class Booking extends Model<Booking> {
   amount?: number;
 
   @Column({
+    type: DataType.DECIMAL(10, 2),
+    allowNull: true,
+  })
+  platformFee?: number;
+
+  @Column({
+    type: DataType.DECIMAL(10, 2),
+    allowNull: true,
+  })
+  totalAmount?: number;
+
+  @Column({
     type: DataType.DATEONLY,
     allowNull: true,
   })
@@ -110,5 +123,13 @@ export class Booking extends Model<Booking> {
 
   @HasOne(() => ConsultantRating, "bookingId")
   rating: ConsultantRating;
+
+  @HasOne(() => BookingTransaction, {
+    foreignKey: 'bookingId',
+    onDelete: 'CASCADE',
+  })
+  bookingTransaction: BookingTransaction;
+
+
 }
 
